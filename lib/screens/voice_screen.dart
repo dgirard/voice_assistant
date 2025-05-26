@@ -14,7 +14,7 @@ class VoiceScreen extends StatefulWidget {
 }
 
 class _VoiceScreenState extends State<VoiceScreen> {
-  bool _isPaused = false;
+  bool _isPaused = true; // Démarrer en pause
   bool _isCameraOn = false;
   double _currentAmplitude = 0.0;
 
@@ -125,6 +125,8 @@ class _VoiceScreenState extends State<VoiceScreen> {
         return 0.5;
       case AssistantState.speaking:
         return 0.9;
+      case AssistantState.paused:
+        return 0.0;
       default:
         return 0.1;
     }
@@ -143,22 +145,12 @@ class _VoiceScreenState extends State<VoiceScreen> {
   }
   
   void _togglePause() {
-    setState(() {
-      _isPaused = !_isPaused;
-    });
-    
     final provider = context.read<VoiceAssistantProvider>();
-    if (_isPaused) {
-      if (provider.state == AssistantState.listening) {
-        provider.stopListening();
-      } else if (provider.state == AssistantState.speaking) {
-        provider.stopSpeaking();
-      }
-    } else {
-      if (provider.state == AssistantState.idle) {
-        provider.startListening();
-      }
-    }
+    provider.togglePause();
+    
+    setState(() {
+      _isPaused = provider.state == AssistantState.paused;
+    });
   }
   
   void _shareAction() {

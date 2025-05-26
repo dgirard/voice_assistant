@@ -15,6 +15,8 @@ class SpeechService {
   bool get speechEnabled => _speechEnabled;
   String get lastWords => _lastWords;
   
+  Function(String)? _onErrorCallback;
+  
   Future<bool> initialize() async {
     var permissionStatus = await Permission.microphone.request();
     
@@ -24,7 +26,13 @@ class SpeechService {
     
     _speechEnabled = await _speechToText.initialize(
       onStatus: (status) => print('Speech status: $status'),
-      onError: (error) => print('Speech error: $error'),
+      onError: (error) {
+        print('Speech error: $error');
+        // Notifier l'erreur pour redémarrage automatique
+        if (_onErrorCallback != null) {
+          _onErrorCallback!(error.errorMsg);
+        }
+      },
     );
     
     _speechAvailable = _speechEnabled;
@@ -36,19 +44,27 @@ class SpeechService {
     return _speechEnabled;
   }
   
-  Future<void> startListening({required Function(String) onResult}) async {
+  Future<void> startListening({
+    required Function(String) onResult, 
+    Function(String)? onError
+  }) async {
     if (!_speechEnabled) return;
+    
+    _onErrorCallback = onError;
     
     await _speechToText.listen(
       onResult: (result) {
         _lastWords = result.recognizedWords;
         onResult(_lastWords);
       },
-      listenFor: const Duration(seconds: 30),
-      pauseFor: const Duration(seconds: 3),
+      listenFor: const Duration(seconds: 30), // Durée raisonnable
+      pauseFor: const Duration(seconds: 3), // Pause optimisée
       partialResults: true,
       localeId: "fr-FR",
-      listenMode: ListenMode.confirmation,
+      listenMode: ListenMode.dictation,
+      onSoundLevelChange: (level) {
+        // Callback pour maintenir l'écoute active
+      },
     );
   }
   
