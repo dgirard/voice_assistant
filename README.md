@@ -4,12 +4,12 @@ Un assistant vocal moderne avec animations fluides inspiré de Gemini, développ
 
 ## ✨ Fonctionnalités
 
-- 🎙️ **Reconnaissance vocale** - Speech-to-text en français
-- 🤖 **Intelligence artificielle** - Intégration API Gemini
+- 🎙️ **Push-to-Talk** - Maintenez le bouton pour enregistrer
+- 🤖 **Intelligence artificielle** - Intégration API Gemini 1.5 Flash
 - 🔊 **Synthèse vocale** - Text-to-speech pour les réponses
 - 🌊 **Animations fluides** - Vagues bleues réactives au son
 - 📱 **Design moderne** - Interface sombre style Gemini
-- 🎛️ **Contrôles intuitifs** - Barre de contrôle avec 4 actions
+- 🔐 **Configuration sécurisée** - Variables d'environnement pour API
 
 ## 🎨 Interface
 
@@ -17,8 +17,9 @@ L'application reproduit fidèlement le design des assistants vocaux modernes :
 
 - **Barre d'application** : Icônes navigation + indicateur "Live"
 - **Animation vagues** : Dégradé bleu qui réagit à l'amplitude vocale
+- **Bouton central** : Enregistrement push-to-talk avec feedback visuel
 - **Zone principale** : Fond noir avec transitions fluides
-- **Barre contrôle** : Caméra, partage, pause, fermeture
+- **Barre contrôle** : Caméra, partage, fermeture
 
 ## 🚀 Installation
 
@@ -41,9 +42,9 @@ flutter pub get
 ```
 
 3. **Configurer l'API Gemini**
-```dart
-// Dans lib/services/ai_service.dart
-static const String _apiKey = 'VOTRE_CLE_API_GEMINI';
+```bash
+# Créer le fichier .env à la racine du projet
+echo "GEMINI_API_KEY=VOTRE_CLE_API_GEMINI" > .env
 ```
 
 4. **Lancer l'application**
@@ -58,6 +59,7 @@ flutter run
 - `permission_handler` - Gestion permissions
 - `provider` - Gestion d'état
 - `http` - Requêtes API
+- `flutter_dotenv` - Variables d'environnement sécurisées
 
 ## 🏗️ Architecture
 
@@ -73,16 +75,18 @@ lib/
 │   └── voice_screen.dart     # Écran principal
 └── widgets/                  # Composants UI
     ├── wave_animation.dart   # Animation vagues
+    ├── voice_record_button.dart # Bouton push-to-talk
+    ├── speech_text_display.dart # Affichage texte
     ├── custom_app_bar.dart   # Barre d'application
     └── control_bar.dart      # Barre de contrôle
 ```
 
 ## 🎯 Utilisation
 
-1. **Démarrer** : Appuyez sur le bouton microphone
-2. **Parler** : L'animation réagit à votre voix
-3. **Écouter** : L'assistant répond vocalement
-4. **Contrôler** : Utilisez les boutons de la barre inférieure
+1. **Maintenir** : Appuyez et maintenez le bouton central
+2. **Parler** : Enregistrez votre message vocal
+3. **Relâcher** : Le message est envoyé automatiquement à l'IA
+4. **Écouter** : L'assistant répond vocalement avec animation
 
 ## 🔧 Configuration API
 
