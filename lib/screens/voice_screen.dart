@@ -5,6 +5,7 @@ import '../widgets/custom_app_bar.dart';
 import '../widgets/wave_animation.dart';
 import '../widgets/control_bar.dart';
 import '../widgets/speech_text_display.dart';
+import '../widgets/voice_record_button.dart';
 
 class VoiceScreen extends StatefulWidget {
   const VoiceScreen({Key? key}) : super(key: key);
@@ -14,9 +15,7 @@ class VoiceScreen extends StatefulWidget {
 }
 
 class _VoiceScreenState extends State<VoiceScreen> {
-  bool _isPaused = true; // Démarrer en pause
   bool _isCameraOn = false;
-  double _currentAmplitude = 0.0;
 
   @override
   void initState() {
@@ -75,17 +74,27 @@ class _VoiceScreenState extends State<VoiceScreen> {
                 ),
               ),
               
+              // Bouton d'enregistrement central
+              Positioned(
+                bottom: 200,
+                left: 0,
+                right: 0,
+                child: const Center(
+                  child: VoiceRecordButton(),
+                ),
+              ),
+              
               // Barre de contrôle inférieure
               Positioned(
                 bottom: 0,
                 left: 0,
                 right: 0,
                 child: ControlBar(
-                  isPaused: _isPaused,
+                  isPaused: false, // Plus de logique pause/play
                   isCameraOn: _isCameraOn,
                   onCameraPressed: _toggleCamera,
                   onSharePressed: _shareAction,
-                  onPausePressed: _togglePause,
+                  onPausePressed: null, // Désactiver le bouton pause
                   onClosePressed: () => Navigator.of(context).pop(),
                 ),
               ),
@@ -125,8 +134,6 @@ class _VoiceScreenState extends State<VoiceScreen> {
         return 0.5;
       case AssistantState.speaking:
         return 0.9;
-      case AssistantState.paused:
-        return 0.0;
       default:
         return 0.1;
     }
@@ -144,14 +151,7 @@ class _VoiceScreenState extends State<VoiceScreen> {
     });
   }
   
-  void _togglePause() {
-    final provider = context.read<VoiceAssistantProvider>();
-    provider.togglePause();
-    
-    setState(() {
-      _isPaused = provider.state == AssistantState.paused;
-    });
-  }
+  // Méthode supprimée - plus de logique pause/play
   
   void _shareAction() {
     // Implémentation du partage

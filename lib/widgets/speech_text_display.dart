@@ -140,33 +140,7 @@ class SpeechTextDisplay extends StatelessWidget {
                 ),
               
               // Instructions d'utilisation
-              if (provider.state == AssistantState.paused && provider.currentText.isEmpty && provider.lastResponse.isEmpty)
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.play_circle_filled,
-                        size: 48,
-                        color: Colors.white.withOpacity(0.3),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Appuyez sur le bouton play pour activer l\'écoute continue',
-                        style: TextStyle(
-                          fontFamily: 'Chakra Petch',
-                          fontSize: 16,
-                          color: Colors.white.withOpacity(0.6),
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              
-              // État d'écoute active
-              if (provider.state == AssistantState.idle && provider.continuousListening)
+              if (provider.state == AssistantState.idle && provider.currentText.isEmpty && provider.lastResponse.isEmpty)
                 Container(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -174,15 +148,15 @@ class SpeechTextDisplay extends StatelessWidget {
                       Icon(
                         Icons.mic,
                         size: 48,
-                        color: Colors.blue.withOpacity(0.7),
+                        color: Colors.white.withOpacity(0.3),
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'En écoute... Parlez maintenant',
+                        'Maintenez le bouton pour enregistrer votre message',
                         style: TextStyle(
                           fontFamily: 'Chakra Petch',
                           fontSize: 16,
-                          color: Colors.blue.withOpacity(0.8),
+                          color: Colors.white.withOpacity(0.6),
                           fontWeight: FontWeight.w500,
                         ),
                         textAlign: TextAlign.center,

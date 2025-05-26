@@ -4,7 +4,6 @@ import '../services/ai_service.dart';
 import 'dart:async';
 
 enum AssistantState {
-  paused,
   idle,
   listening,
   thinking,
@@ -16,15 +15,14 @@ class VoiceAssistantProvider with ChangeNotifier {
   final SpeechService _speechService = SpeechService();
   final AIService _aiService = AIService();
   
-  AssistantState _state = AssistantState.paused;
+  AssistantState _state = AssistantState.idle;
   String _currentText = '';
   String _lastResponse = '';
   List<String> _conversationHistory = [];
   bool _isInitialized = false;
-  bool _continuousListening = false;
-  Timer? _restartTimer;
+  bool _isRecording = false;
   int _retryCount = 0;
-  static const int _maxRetries = 5;
+  static const int _maxRetries = 3;
   static const int _maxHistoryItems = 100;
   
   AssistantState get state => _state;
@@ -33,13 +31,13 @@ class VoiceAssistantProvider with ChangeNotifier {
   List<String> get conversationHistory => _conversationHistory;
   bool get isInitialized => _isInitialized;
   bool get isListening => _speechService.isListening;
-  bool get continuousListening => _continuousListening;
+  bool get isRecording => _isRecording;
   
   Future<void> initialize() async {
     try {
       _isInitialized = await _speechService.initialize();
       if (_isInitialized) {
-        _setState(AssistantState.paused);
+        _setState(AssistantState.idle);
       } else {
         _setState(AssistantState.error);
       }
@@ -50,27 +48,14 @@ class VoiceAssistantProvider with ChangeNotifier {
     notifyListeners();
   }
   
-  Future<void> togglePause() async {
-    if (_state == AssistantState.paused) {
-      // Démarrer l'écoute continue
-      _continuousListening = true;
-      _setState(AssistantState.idle);
-      await _startContinuousListening();
-    } else {
-      // Mettre en pause
-      _continuousListening = false;
-      _restartTimer?.cancel();
-      await stopListening();
-      _setState(AssistantState.paused);
-    }
-    notifyListeners();
-  }
-  
-  Future<void> _startContinuousListening() async {
-    if (!_continuousListening || _state == AssistantState.paused) return;
+  /// Démarrer l'enregistrement vocal (Push-to-Talk)
+  Future<void> startRecording() async {
+    if (!_isInitialized || _state != AssistantState.idle) return;
     
+    _isRecording = true;
     _setState(AssistantState.listening);
     _currentText = '';
+    _retryCount = 0; // Reset du compteur
     
     await _speechService.startListening(
       onResult: (text) {
@@ -79,80 +64,50 @@ class VoiceAssistantProvider with ChangeNotifier {
       },
       onError: (error) {
         print('Erreur speech: $error');
-        _retryCount++;
-        
-        // Circuit breaker : arrêter après trop d'échecs
-        if (_retryCount >= _maxRetries) {
-          print('Trop d\'échecs de reconnaissance vocale, mise en pause');
-          _continuousListening = false;
-          _setState(AssistantState.paused);
-          return;
-        }
-        
-        // Redémarrer avec délai progressif
-        if (_continuousListening && 
-            (error.contains('timeout') || error.contains('no_match'))) {
-          final delay = Duration(seconds: _retryCount * 2); // Backoff exponentiel
-          Future.delayed(delay, () {
-            if (_continuousListening) {
-              _restartListening();
-            }
-          });
-        }
+        // En mode push-to-talk, on ne redémarre pas automatiquement
+        _stopRecordingWithError();
       }
     );
     
-    // Programmer un redémarrage automatique si l'écoute s'arrête
-    _restartTimer = Timer(const Duration(seconds: 25), () {
-      if (_continuousListening && _state == AssistantState.listening) {
-        _restartListening();
+    notifyListeners();
+  }
+  
+  /// Arrêter l'enregistrement et traiter le message
+  Future<void> stopRecording() async {
+    if (!_isRecording || _state != AssistantState.listening) return;
+    
+    _isRecording = false;
+    await _speechService.stopListening();
+    
+    if (_currentText.isNotEmpty) {
+      await _processUserInput(_currentText);
+    } else {
+      _setState(AssistantState.idle);
+    }
+    
+    notifyListeners();
+  }
+  
+  /// Arrêter l'enregistrement en cas d'erreur
+  void _stopRecordingWithError() {
+    _isRecording = false;
+    _setState(AssistantState.error);
+    notifyListeners();
+    
+    // Retour automatique à idle après 2 secondes
+    Timer(const Duration(seconds: 2), () {
+      if (_state == AssistantState.error) {
+        _setState(AssistantState.idle);
+        notifyListeners();
       }
     });
   }
   
-  Future<void> _restartListening() async {
-    if (!_continuousListening) return;
-    
-    // Si on a du texte, le traiter d'abord
-    if (_currentText.isNotEmpty) {
-      await _processUserInput(_currentText);
-    } else {
-      // Sinon redémarrer l'écoute directement
-      await _speechService.stopListening();
-      await Future.delayed(const Duration(milliseconds: 300));
-      await _startContinuousListening();
-    }
-  }
-  
-  Future<void> startListening() async {
-    if (!_isInitialized || _state == AssistantState.paused || !_continuousListening) return;
-    await _startContinuousListening();
-  }
-  
-  Future<void> stopListening() async {
-    _restartTimer?.cancel();
-    
-    if (_state != AssistantState.listening) return;
-    
-    await _speechService.stopListening();
-    
-    if (_currentText.isNotEmpty && _continuousListening) {
-      await _processUserInput(_currentText);
-    } else if (!_continuousListening) {
-      _setState(AssistantState.paused);
-    } else {
-      _setState(AssistantState.idle);
-    }
-  }
-  
+  /// Traiter l'input utilisateur et obtenir une réponse IA
   Future<void> _processUserInput(String userInput) async {
-    _restartTimer?.cancel();
     _setState(AssistantState.thinking);
     
     try {
-      // Réinitialiser le compteur de retry en cas de succès
-      _retryCount = 0;
-      
       // Ajouter à l'historique avec limitation
       _conversationHistory.add('Vous: $userInput');
       _conversationHistory.add('Assistant: [En cours...]');
@@ -176,40 +131,33 @@ class VoiceAssistantProvider with ChangeNotifier {
       _setState(AssistantState.speaking);
       await _speechService.speak(response);
       
-      // Reprendre l'écoute automatiquement si en mode continu
-      if (_continuousListening && _state != AssistantState.paused) {
-        _setState(AssistantState.idle);
-        await Future.delayed(const Duration(milliseconds: 500));
-        await _startContinuousListening();
-      } else {
-        _setState(AssistantState.paused);
-      }
+      // Retour à l'état idle
+      _setState(AssistantState.idle);
+      
     } catch (e) {
       _setState(AssistantState.error);
       print('Erreur lors du traitement: $e');
       
-      // Redémarrer l'écoute même en cas d'erreur API
-      if (_continuousListening) {
-        await Future.delayed(const Duration(seconds: 2));
-        _setState(AssistantState.idle);
-        await _startContinuousListening();
-      }
+      // Retour automatique à idle après erreur
+      Timer(const Duration(seconds: 3), () {
+        if (_state == AssistantState.error) {
+          _setState(AssistantState.idle);
+          notifyListeners();
+        }
+      });
     }
     
     notifyListeners();
   }
   
+  /// Arrêter la synthèse vocale
   Future<void> stopSpeaking() async {
     await _speechService.stop();
-    if (_continuousListening) {
-      _setState(AssistantState.idle);
-      await _startContinuousListening();
-    } else {
-      _setState(AssistantState.paused);
-    }
+    _setState(AssistantState.idle);
     notifyListeners();
   }
   
+  /// Vider l'historique de conversation
   void clearHistory() {
     _conversationHistory.clear();
     _currentText = '';
@@ -224,7 +172,6 @@ class VoiceAssistantProvider with ChangeNotifier {
   
   @override
   void dispose() {
-    _restartTimer?.cancel();
     _speechService.dispose();
     super.dispose();
   }
