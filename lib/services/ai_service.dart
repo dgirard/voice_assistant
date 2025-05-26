@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../config/env_config.dart';
 
 class AIService {
-  static const String _baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+  static const String _baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
   
   // Clé API chargée depuis les variables d'environnement
   String get _apiKey => EnvConfig.geminiApiKey;

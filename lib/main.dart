@@ -56,12 +56,12 @@ class ErrorApp extends StatelessWidget {
       title: 'Configuration Error',
       home: Scaffold(
         backgroundColor: Colors.red[50],
-        body: const Center(
+        body: Center(
           child: Padding(
-            padding: EdgeInsets.all(32.0),
+            padding: const EdgeInsets.all(32.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+              children: const [
                 Icon(
                   Icons.error_outline,
                   size: 64,
