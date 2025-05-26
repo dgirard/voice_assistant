@@ -4,6 +4,7 @@ import '../providers/voice_assistant_provider.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/wave_animation.dart';
 import '../widgets/control_bar.dart';
+import '../widgets/speech_text_display.dart';
 
 class VoiceScreen extends StatefulWidget {
   const VoiceScreen({Key? key}) : super(key: key);
@@ -52,6 +53,15 @@ class _VoiceScreenState extends State<VoiceScreen> {
                     ],
                   ),
                 ),
+              ),
+              
+              // Zone de texte centrale
+              Positioned(
+                top: 100,
+                left: 0,
+                right: 0,
+                bottom: 300,
+                child: const SpeechTextDisplay(),
               ),
               
               // Animation des vagues

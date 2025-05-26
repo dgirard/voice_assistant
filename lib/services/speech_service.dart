@@ -44,10 +44,10 @@ class SpeechService {
         _lastWords = result.recognizedWords;
         onResult(_lastWords);
       },
-      listenFor: Duration(seconds: 30),
-      pauseFor: Duration(seconds: 3),
+      listenFor: const Duration(seconds: 30),
+      pauseFor: const Duration(seconds: 3),
       partialResults: true,
-      localeId: "fr_FR",
+      localeId: "fr-FR",
       listenMode: ListenMode.confirmation,
     );
   }
