@@ -1,10 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'providers/voice_assistant_provider.dart';
 import 'screens/voice_screen.dart';
+import 'config/env_config.dart';
 
-void main() {
-  runApp(const VoiceAssistantApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  try {
+    // Charger les variables d'environnement
+    await dotenv.load(fileName: ".env");
+    
+    // Valider la configuration
+    EnvConfig.validateEnvironment();
+    
+    runApp(const VoiceAssistantApp());
+  } catch (e) {
+    print('Erreur d\'initialisation: $e');
+    runApp(const ErrorApp());
+  }
 }
 
 class VoiceAssistantApp extends StatelessWidget {
@@ -27,6 +42,50 @@ class VoiceAssistantApp extends StatelessWidget {
         ),
         home: const VoiceScreen(),
         debugShowCheckedModeBanner: false,
+      ),
+    );
+  }
+}
+
+class ErrorApp extends StatelessWidget {
+  const ErrorApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Configuration Error',
+      home: Scaffold(
+        backgroundColor: Colors.red[50],
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: Colors.red,
+                ),
+                SizedBox(height: 24),
+                Text(
+                  'Configuration Error',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red,
+                  ),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Missing API key. Please check the console for instructions.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

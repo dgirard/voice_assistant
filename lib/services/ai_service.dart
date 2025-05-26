@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/env_config.dart';
 
 class AIService {
   static const String _baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
   
-  // Vous devez remplacer cette clé par votre vraie clé API Gemini
-  static const String _apiKey = 'YOUR_GEMINI_API_KEY';
+  // Clé API chargée depuis les variables d'environnement
+  String get _apiKey => EnvConfig.geminiApiKey;
   
   Future<String> generateResponse(String prompt) async {
     try {
