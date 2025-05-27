@@ -121,9 +121,14 @@ class _VoiceRecordButtonState extends State<VoiceRecordButton>
 
   void _onPressStart(VoiceAssistantProvider provider) async {
     if (provider.state == AssistantState.idle) {
+      // Démarrer l'enregistrement seulement si idle
       await provider.startRecording();
     } else if (provider.state == AssistantState.speaking) {
+      // Arrêter la synthèse vocale si l'assistant parle
       await provider.stopSpeaking();
+    } else if (provider.state == AssistantState.thinking) {
+      // Optionnel : permettre d'interrompre la réflexion
+      await provider.stopSpeaking(); // Ceci remettra l'état à idle
     }
   }
 
@@ -155,7 +160,7 @@ class _VoiceRecordButtonState extends State<VoiceRecordButton>
       case AssistantState.thinking:
         return 'Réflexion...';
       case AssistantState.speaking:
-        return 'Répond...';
+        return 'Arrêter';
       case AssistantState.error:
         return 'Erreur';
       default:
