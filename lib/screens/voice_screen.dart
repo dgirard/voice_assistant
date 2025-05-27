@@ -28,7 +28,6 @@ class _VoiceScreenState extends State<VoiceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF000000),
-      appBar: const CustomAppBar(),
       body: Consumer<VoiceAssistantProvider>(
         builder: (context, provider, child) {
           // Déterminer l'amplitude basée sur l'état sans setState
