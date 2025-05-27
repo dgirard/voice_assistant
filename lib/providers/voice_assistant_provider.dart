@@ -79,6 +79,9 @@ class VoiceAssistantProvider with ChangeNotifier {
     _isRecording = false;
     await _speechService.stopListening();
     
+    // Attendre que le speech-to-text finalise la transcription
+    await Future.delayed(const Duration(milliseconds: 500));
+    
     if (_currentText.isNotEmpty) {
       await _processUserInput(_currentText);
     } else {
