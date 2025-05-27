@@ -53,7 +53,7 @@ class _WaveAnimationState extends State<WaveAnimation>
             amplitude: widget.amplitude,
             isActive: widget.isActive,
           ),
-          size: const Size.fromHeight(400),
+          size: const Size.fromHeight(200),
         );
       },
     );
@@ -75,7 +75,9 @@ class WavePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final baseHeight = isActive ? size.height * 0.3 + (amplitude * size.height * 0.4) : size.height * 0.1;
+    // Limiter la hauteur de l'animation au premier tiers de l'écran
+    final maxHeight = size.height * 0.33; // Premier tiers
+    final baseHeight = isActive ? maxHeight * 0.4 + (amplitude * maxHeight * 0.6) : maxHeight * 0.2;
     final glowIntensity = isActive ? 0.7 + (glowAnimation * 0.3) : 0.3 + (glowAnimation * 0.2);
     
     // Créer plusieurs couches de vagues avec des couleurs dégradées
