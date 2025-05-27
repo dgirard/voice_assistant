@@ -80,8 +80,8 @@ class WavePainter extends CustomPainter {
     
     // Créer plusieurs couches de vagues avec des couleurs dégradées
     _paintWaveLayer(canvas, size, baseHeight * 1.2, const Color(0xFF3A4A9F), 0.8 * glowIntensity, 0);
-    _paintWaveLayer(canvas, size, baseHeight * 1.0, const Color(0xFF6B7FD7), 0.9 * glowIntensity, 0.3);
-    _paintWaveLayer(canvas, size, baseHeight * 0.8, const Color(0xFF8A7FDE), 0.7 * glowIntensity, 0.6);
+    _paintWaveLayer(canvas, size, baseHeight * 1.0, const Color(0xFF6B7FD7), 0.9 * glowIntensity, math.pi / 3);
+    _paintWaveLayer(canvas, size, baseHeight * 0.8, const Color(0xFF8A7FDE), 0.7 * glowIntensity, 2 * math.pi / 3);
     
     // Ajouter une lueur douce en arrière-plan
     _paintGlow(canvas, size, baseHeight, glowIntensity);
@@ -95,11 +95,12 @@ class WavePainter extends CustomPainter {
     final path = Path();
     path.moveTo(0, size.height);
     
-    // Créer une forme ondulée organique
+    // Créer une forme ondulée organique avec continuité parfaite
     for (double x = 0; x <= size.width; x += 2) {
+      // Utiliser des vitesses synchronisées pour éviter les sauts
       final wave1 = math.sin((x / size.width * 2 * math.pi) + (waveAnimation * 2 * math.pi) + phaseOffset) * 20;
-      final wave2 = math.sin((x / size.width * 4 * math.pi) + (waveAnimation * 3 * math.pi) + phaseOffset) * 10;
-      final wave3 = math.sin((x / size.width * 6 * math.pi) + (waveAnimation * 1.5 * math.pi) + phaseOffset) * 5;
+      final wave2 = math.sin((x / size.width * 4 * math.pi) + (waveAnimation * 2 * math.pi) + phaseOffset) * 10;
+      final wave3 = math.sin((x / size.width * 6 * math.pi) + (waveAnimation * 2 * math.pi) + phaseOffset) * 5;
       
       final y = size.height - height + wave1 + wave2 + wave3;
       path.lineTo(x, y);
