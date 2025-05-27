@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/voice_assistant_provider.dart';
-import '../widgets/custom_app_bar.dart';
 import '../widgets/wave_animation.dart';
 import '../widgets/control_bar.dart';
 import '../widgets/speech_text_display.dart';
