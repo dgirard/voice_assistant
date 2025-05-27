@@ -166,6 +166,45 @@ class _VoiceScreenState extends State<VoiceScreen> {
   
   // Méthode supprimée - plus de logique pause/play
   
+  void _startNewConversation() {
+    final provider = context.read<VoiceAssistantProvider>();
+    
+    // Arrêter toute activité en cours
+    if (provider.state == AssistantState.speaking) {
+      provider.stopSpeaking();
+    }
+    
+    // Vider l'historique
+    provider.clearHistory();
+    
+    // Afficher un message de confirmation
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: const [
+            Icon(Icons.refresh, color: Colors.white, size: 20),
+            SizedBox(width: 12),
+            Text(
+              'Nouvelle conversation démarrée',
+              style: TextStyle(
+                fontFamily: 'Chakra Petch',
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF6B7FD7),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+  
   void _shareAction() {
     // Implémentation du partage
     ScaffoldMessenger.of(context).showSnackBar(
