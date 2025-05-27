@@ -22,6 +22,7 @@ class VoiceAssistantProvider with ChangeNotifier {
   bool _isInitialized = false;
   bool _isRecording = false;
   int _retryCount = 0;
+  double _currentSoundLevel = 0.0;
   static const int _maxRetries = 3;
   static const int _maxHistoryItems = 100;
   
@@ -32,6 +33,7 @@ class VoiceAssistantProvider with ChangeNotifier {
   bool get isInitialized => _isInitialized;
   bool get isListening => _speechService.isListening;
   bool get isRecording => _isRecording;
+  double get currentSoundLevel => _currentSoundLevel;
   
   Future<void> initialize() async {
     try {
@@ -66,6 +68,11 @@ class VoiceAssistantProvider with ChangeNotifier {
         print('Erreur speech: $error');
         // En mode push-to-talk, on ne redémarre pas automatiquement
         _stopRecordingWithError();
+      },
+      onSoundLevelChange: (level) {
+        // Mettre à jour le niveau sonore pour l'animation
+        _currentSoundLevel = level;
+        notifyListeners();
       }
     );
     
@@ -78,6 +85,9 @@ class VoiceAssistantProvider with ChangeNotifier {
     
     _isRecording = false;
     await _speechService.stopListening();
+    
+    // Réinitialiser le niveau sonore
+    _currentSoundLevel = 0.0;
     
     // Attendre que le speech-to-text finalise la transcription
     await Future.delayed(const Duration(milliseconds: 500));
@@ -94,6 +104,7 @@ class VoiceAssistantProvider with ChangeNotifier {
   /// Arrêter l'enregistrement en cas d'erreur
   void _stopRecordingWithError() {
     _isRecording = false;
+    _currentSoundLevel = 0.0;
     _setState(AssistantState.error);
     notifyListeners();
     

@@ -68,9 +68,22 @@ class _VoiceScreenState extends State<VoiceScreen> {
                 bottom: 150, // Au-dessus de la barre de contrôle
                 left: 0,
                 right: 0,
-                child: WaveAnimation(
-                  amplitude: amplitude,
-                  isActive: isActive,
+                child: Consumer<VoiceAssistantProvider>(
+                  builder: (context, provider, child) {
+                    double waveAmplitude;
+                    if (provider.state == AssistantState.listening) {
+                      // Utiliser le niveau sonore réel pendant l'écoute
+                      waveAmplitude = 0.2 + (provider.currentSoundLevel * 0.8);
+                    } else {
+                      // Utiliser l'amplitude basée sur l'état pour les autres cas
+                      waveAmplitude = amplitude;
+                    }
+                    
+                    return WaveAnimation(
+                      amplitude: waveAmplitude,
+                      isActive: isActive,
+                    );
+                  },
                 ),
               ),
               

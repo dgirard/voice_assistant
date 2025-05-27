@@ -46,7 +46,8 @@ class SpeechService {
   
   Future<void> startListening({
     required Function(String) onResult, 
-    Function(String)? onError
+    Function(String)? onError,
+    Function(double)? onSoundLevelChange
   }) async {
     if (!_speechEnabled) return;
     
@@ -63,7 +64,10 @@ class SpeechService {
       localeId: "fr-FR",
       listenMode: ListenMode.dictation,
       onSoundLevelChange: (level) {
-        // Callback pour maintenir l'écoute active
+        // Transmettre le niveau sonore pour l'animation
+        if (onSoundLevelChange != null) {
+          onSoundLevelChange(level);
+        }
       },
     );
   }
