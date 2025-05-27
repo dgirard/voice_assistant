@@ -47,13 +47,6 @@ class ControlBar extends StatelessWidget {
               backgroundColor: const Color(0xFF333333),
             ),
             
-            // Bouton Pause/Play
-            _buildControlButton(
-              icon: isPaused ? Icons.play_circle_filled : Icons.pause_circle_filled,
-              onPressed: onPausePressed,
-              backgroundColor: const Color(0xFF333333),
-            ),
-            
             // Bouton Fermer (rouge)
             _buildControlButton(
               icon: Icons.close,

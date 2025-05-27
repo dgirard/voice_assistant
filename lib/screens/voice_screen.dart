@@ -107,7 +107,7 @@ class _VoiceScreenState extends State<VoiceScreen> {
                   isCameraOn: _isCameraOn,
                   onCameraPressed: _toggleCamera,
                   onSharePressed: _shareAction,
-                  onPausePressed: null, // Désactiver le bouton pause
+                  onPausePressed: null, // Bouton pause supprimé
                   onClosePressed: _startNewConversation,
                 ),
               ),
