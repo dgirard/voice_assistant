@@ -8,21 +8,62 @@ class AIService {
   // Clé API chargée depuis les variables d'environnement
   String get _apiKey => EnvConfig.geminiApiKey;
   
-  Future<String> generateResponse(String prompt) async {
+  Future<String> generateResponse(String prompt, [List<String>? conversationHistory]) async {
     try {
+      // Construire l'historique de conversation pour Gemini
+      List<Map<String, dynamic>> contents = [];
+      
+      // Ajouter l'instruction système
+      contents.add({
+        'role': 'user',
+        'parts': [
+          {'text': 'Tu es un assistant vocal intelligent et serviable. Réponds de manière conversationnelle et naturelle en français. Garde tes réponses concises mais informatives.'}
+        ]
+      });
+      
+      contents.add({
+        'role': 'model',
+        'parts': [
+          {'text': 'Compris ! Je suis votre assistant vocal. Je répondrai de manière naturelle et conversationnelle en français. Comment puis-je vous aider ?'}
+        ]
+      });
+      
+      // Ajouter l'historique de conversation si disponible
+      if (conversationHistory != null && conversationHistory.isNotEmpty) {
+        for (String message in conversationHistory) {
+          if (message.startsWith('Vous: ')) {
+            contents.add({
+              'role': 'user',
+              'parts': [
+                {'text': message.substring(6)} // Retirer "Vous: "
+              ]
+            });
+          } else if (message.startsWith('Assistant: ') && !message.contains('[En cours...]')) {
+            contents.add({
+              'role': 'model',
+              'parts': [
+                {'text': message.substring(11)} // Retirer "Assistant: "
+              ]
+            });
+          }
+        }
+      }
+      
+      // Ajouter le message actuel
+      contents.add({
+        'role': 'user',
+        'parts': [
+          {'text': prompt}
+        ]
+      });
+
       final response = await http.post(
         Uri.parse('$_baseUrl?key=$_apiKey'),
         headers: {
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
-          'contents': [
-            {
-              'parts': [
-                {'text': prompt}
-              ]
-            }
-          ],
+          'contents': contents,
           'generationConfig': {
             'temperature': 0.7,
             'topK': 40,
@@ -50,12 +91,7 @@ class AIService {
   }
   
   String formatPromptForAssistant(String userInput) {
-    return """Tu es un assistant vocal intelligent et serviable. 
-Réponds de manière conversationnelle et naturelle en français. 
-Garde tes réponses concises mais informatives.
-
-Question de l'utilisateur: $userInput
-
-Réponse:""";
+    // Cette méthode est maintenant simplifiée car le contexte est géré dans generateResponse
+    return userInput;
   }
 }

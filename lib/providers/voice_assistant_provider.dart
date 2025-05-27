@@ -120,11 +120,11 @@ class VoiceAssistantProvider with ChangeNotifier {
         _conversationHistory.removeRange(0, _conversationHistory.length - _maxHistoryItems);
       }
       
-      // Formater le prompt avec le contexte
+      // Formater le prompt
       String prompt = _aiService.formatPromptForAssistant(userInput);
       
-      // Obtenir la réponse de l'IA
-      String response = await _aiService.generateResponse(prompt);
+      // Obtenir la réponse de l'IA avec l'historique de conversation
+      String response = await _aiService.generateResponse(prompt, _conversationHistory);
       _lastResponse = response;
       
       // Remplacer le message temporaire
