@@ -108,7 +108,7 @@ class _VoiceScreenState extends State<VoiceScreen> {
                   onCameraPressed: _toggleCamera,
                   onSharePressed: _shareAction,
                   onPausePressed: null, // Désactiver le bouton pause
-                  onClosePressed: () => Navigator.of(context).pop(),
+                  onClosePressed: _startNewConversation,
                 ),
               ),
               
