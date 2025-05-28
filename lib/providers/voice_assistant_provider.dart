@@ -288,11 +288,38 @@ class VoiceAssistantProvider with ChangeNotifier {
     // Supprimer tout ce qui est entre parenthèses
     String cleaned = response.replaceAll(RegExp(r'\([^)]*\)'), '');
     
-    // Supprimer les espaces multiples
-    cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ');
+    // Supprimer les marqueurs markdown en préservant le contenu
+    cleaned = cleaned
+        // Gras **texte** - garder seulement le texte
+        .replaceAllMapped(RegExp(r'\*\*(.*?)\*\*'), (match) => match.group(1) ?? '')
+        .replaceAllMapped(RegExp(r'__(.*?)__'), (match) => match.group(1) ?? '')
+        // Italique *texte* - attention aux conflits avec les listes
+        .replaceAllMapped(RegExp(r'(?<!\*)\*([^*]+)\*(?!\*)'), (match) => match.group(1) ?? '')
+        .replaceAllMapped(RegExp(r'(?<!_)_([^_]+)_(?!_)'), (match) => match.group(1) ?? '')
+        // Code `texte`
+        .replaceAllMapped(RegExp(r'`([^`]*)`'), (match) => match.group(1) ?? '')
+        // Liens [texte](url) - garder seulement le texte
+        .replaceAllMapped(RegExp(r'\[([^\]]*)\]\([^)]*\)'), (match) => match.group(1) ?? '')
+        // Barré ~~texte~~
+        .replaceAllMapped(RegExp(r'~~(.*?)~~'), (match) => match.group(1) ?? '')
+        // Titres # ## ### etc. - enlever seulement les #
+        .replaceAll(RegExp(r'^#{1,6}\s*', multiLine: true), '')
+        // Listes - ou * ou + - enlever seulement les puces
+        .replaceAll(RegExp(r'^[\s]*[-*+]\s+', multiLine: true), '')
+        // Listes numérotées 1. 2. etc.
+        .replaceAll(RegExp(r'^\s*\d+\.\s+', multiLine: true), '')
+        // Citations >
+        .replaceAll(RegExp(r'^>\s*', multiLine: true), '')
+        // Code blocks ``` - supprimer entièrement
+        .replaceAll(RegExp(r'```[^`]*```', dotAll: true), '');
     
-    // Supprimer les espaces en début et fin
-    cleaned = cleaned.trim();
+    // Supprimer les caractères indésirables d'abord
+    cleaned = cleaned
+        .replaceAll(RegExp(r'[\$]+'), '') // Supprimer les $ qui trainent
+        .replaceAll(RegExp(r'\*+'), '') // Supprimer les * isolés
+        .replaceAll(RegExp(r'"+'), '') // Supprimer les " isolés
+        .replaceAll(RegExp(r'\s+'), ' ') // Puis nettoyer les espaces multiples
+        .trim();
     
     return cleaned;
   }
