@@ -1,15 +1,16 @@
 # 🎤 Voice Assistant Flutter
 
-Un assistant vocal moderne avec animations fluides inspiré de Gemini, développé en Flutter.
+Un assistant vocal moderne avec support multi-assistant (Gemini + Raise) et système TTS avancé, développé en Flutter.
 
 ## ✨ Fonctionnalités
 
-- 🎙️ **Push-to-Talk** - Maintenez le bouton pour enregistrer
-- 🤖 **Intelligence artificielle** - Intégration API Gemini 1.5 Flash
-- 🔊 **Synthèse vocale** - Text-to-speech pour les réponses
+- 🎙️ **Clic simple** - Démarrage/arrêt d'enregistrement en un clic
+- 🤖 **Multi-assistant** - Support Gemini AI et assistants Raise spécialisés
+- 🔊 **TTS avancé** - Android TTS standard + Gemini AI TTS expérimental
 - 🌊 **Animations fluides** - Vagues bleues réactives au son
-- 📱 **Design moderne** - Interface sombre style Gemini
+- 📱 **Design moderne** - Interface sombre style Gemini avec sélection d'assistant
 - 🔐 **Configuration sécurisée** - Variables d'environnement pour API
+- 💾 **Persistance** - Sauvegarde automatique des préférences utilisateur
 
 ## 🎨 Interface
 
@@ -17,9 +18,11 @@ L'application reproduit fidèlement le design des assistants vocaux modernes :
 
 - **Barre d'application** : Icônes navigation + indicateur "Live"
 - **Animation vagues** : Dégradé bleu qui réagit à l'amplitude vocale
-- **Bouton central** : Enregistrement push-to-talk avec feedback visuel
+- **Bouton central** : Enregistrement clic simple avec feedback visuel
 - **Zone principale** : Fond noir avec transitions fluides
-- **Barre contrôle** : Caméra, partage, fermeture
+- **Barre contrôle** : Icône assistant, paramètres, caméra, partage, fermeture
+- **Écran sélection** : Interface dédiée pour choisir l'assistant (Gemini/Raise)
+- **Écran paramètres** : Configuration TTS (Android standard vs Gemini AI)
 
 ## 🚀 Installation
 
@@ -41,10 +44,11 @@ cd voice_assistant
 flutter pub get
 ```
 
-3. **Configurer l'API Gemini**
+3. **Configurer les APIs**
 ```bash
 # Créer le fichier .env à la racine du projet
 echo "GEMINI_API_KEY=VOTRE_CLE_API_GEMINI" > .env
+echo "RAISE_API_KEY=VOTRE_CLE_API_RAISE" >> .env
 ```
 
 4. **Lancer l'application**
@@ -55,11 +59,14 @@ flutter run
 ## 📦 Dépendances
 
 - `speech_to_text` - Reconnaissance vocale
-- `flutter_tts` - Synthèse vocale  
+- `flutter_tts` - Synthèse vocale Android
 - `permission_handler` - Gestion permissions
 - `provider` - Gestion d'état
 - `http` - Requêtes API
 - `flutter_dotenv` - Variables d'environnement sécurisées
+- `shared_preferences` - Persistance des préférences
+- `path_provider` - Accès système de fichiers pour TTS Gemini
+- `cupertino_icons` - Icônes iOS style
 
 ## 🏗️ Architecture
 
@@ -69,36 +76,60 @@ lib/
 ├── providers/                # Gestion d'état
 │   └── voice_assistant_provider.dart
 ├── services/                 # Services métier
-│   ├── speech_service.dart   # Reconnaissance/synthèse vocale
-│   └── ai_service.dart       # Intégration IA
+│   ├── speech_service.dart   # Reconnaissance vocale
+│   ├── ai_service.dart       # Intégration IA multi-assistant
+│   ├── raise_api_service.dart # API Raise pour assistants spécialisés
+│   ├── tts_service.dart      # Services TTS (Android + Gemini)
+│   └── gemini_tts_test.dart  # Implémentation TTS Gemini avancée
 ├── screens/                  # Écrans
-│   └── voice_screen.dart     # Écran principal
+│   ├── voice_screen.dart     # Écran principal
+│   ├── assistant_selection_screen.dart # Sélection d'assistant
+│   ├── settings_screen.dart  # Paramètres TTS
+│   └── gemini_tts_test_screen.dart # Test laboratoire Gemini TTS
 └── widgets/                  # Composants UI
     ├── wave_animation.dart   # Animation vagues
-    ├── voice_record_button.dart # Bouton push-to-talk
+    ├── voice_record_button.dart # Bouton clic simple
     ├── speech_text_display.dart # Affichage texte
     ├── custom_app_bar.dart   # Barre d'application
-    └── control_bar.dart      # Barre de contrôle
+    ├── control_bar.dart      # Barre de contrôle
+    └── tts_engine_selector.dart # Sélecteur moteur TTS
 ```
 
 ## 🎯 Utilisation
 
-1. **Maintenir** : Appuyez et maintenez le bouton central
+### Assistant vocal
+1. **Cliquer** : Un clic sur le bouton central démarre l'enregistrement
 2. **Parler** : Enregistrez votre message vocal
-3. **Relâcher** : Le message est envoyé automatiquement à l'IA
+3. **Cliquer** : Un second clic envoie le message à l'assistant sélectionné
 4. **Écouter** : L'assistant répond vocalement avec animation
+
+### Sélection d'assistant
+1. **Icône assistant** : Cliquez sur l'icône dans la barre du bas
+2. **Choisir** : Sélectionnez Gemini (général) ou un assistant Raise (spécialisé)
+3. **Retour automatique** : L'écran principal se restaure avec le nouvel assistant
+
+### Configuration TTS
+1. **Paramètres** : Accédez via l'icône paramètres
+2. **Moteur TTS** : Choisissez Android TTS (standard) ou Gemini AI TTS (expérimental)
+3. **Test** : Testez la voix sélectionnée avant utilisation
 
 ## 🔧 Configuration API
 
 ### Gemini API
 1. Obtenez une clé sur [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Remplacez `YOUR_GEMINI_API_KEY` dans `ai_service.dart`
+2. Ajoutez `GEMINI_API_KEY=votre_clé` dans le fichier `.env`
+
+### Raise API (optionnel)
+1. Obtenez une clé API Raise auprès de SFEIR
+2. Ajoutez `RAISE_API_KEY=votre_clé` dans le fichier `.env`
+3. Les assistants Raise spécialisés seront automatiquement disponibles
 
 ## 📱 Permissions
 
 ### Android
 - `RECORD_AUDIO` - Enregistrement microphone
 - `INTERNET` - Accès réseau
+- `WRITE_EXTERNAL_STORAGE` - Stockage fichiers audio temporaires (TTS Gemini)
 
 ### iOS  
 - `NSMicrophoneUsageDescription` - Utilisation microphone

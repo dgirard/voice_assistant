@@ -1,21 +1,27 @@
 # Voice Assistant Flutter App
 
 ## Description
-Assistant vocal intelligent développé en Flutter avec reconnaissance vocale, synthèse vocale et intégration Gemini AI. Interface moderne avec animations réactives et UX push-to-talk.
+Assistant vocal intelligent développé en Flutter avec support multi-assistant (Gemini + Raise), système TTS avancé (Android + Gemini AI), et interface moderne avec animations réactives. UX simplifiée avec interaction clic simple.
 
 ## Architecture
-- **State Management**: Provider pattern
+- **State Management**: Provider pattern avec SharedPreferences pour persistance
 - **Voice Recognition**: speech_to_text package
-- **Text-to-Speech**: flutter_tts package
-- **AI Integration**: Google Gemini API avec historique conversationnel
-- **UI Pattern**: Push-to-talk remplaçant l'écoute continue
+- **Text-to-Speech**: Système dual (flutter_tts + Gemini AI TTS avec plugin Android natif)
+- **AI Integration**: Multi-assistant (Gemini API + Raise API) avec résumé automatique
+- **UI Pattern**: Interaction clic simple avec sélection d'assistant dédiée
 
 ## Fichiers Principaux
-- `lib/providers/voice_assistant_provider.dart` - Gestion d'état principal
-- `lib/services/ai_service.dart` - Intégration Gemini API
-- `lib/widgets/voice_record_button.dart` - Bouton push-to-talk
+- `lib/providers/voice_assistant_provider.dart` - Gestion d'état principal multi-assistant
+- `lib/services/ai_service.dart` - Intégration multi-API (Gemini + Raise) avec résumé
+- `lib/services/raise_api_service.dart` - Service API Raise pour assistants spécialisés
+- `lib/services/tts_service.dart` - Services TTS dual (Android + Gemini AI)
+- `lib/services/gemini_tts_test.dart` - Implémentation TTS Gemini avancée
+- `lib/widgets/voice_record_button.dart` - Bouton clic simple
 - `lib/widgets/wave_animation.dart` - Animations réactives au microphone
 - `lib/screens/voice_screen.dart` - Interface principale
+- `lib/screens/assistant_selection_screen.dart` - Sélection d'assistant
+- `lib/screens/settings_screen.dart` - Configuration TTS
+- `android/app/src/main/kotlin/com/example/voice_assistant/GeminiTtsTestPlugin.kt` - Plugin Android pour TTS Gemini
 
 ## Commandes de Développement
 ```bash
@@ -28,8 +34,8 @@ flutter run
 # Build pour Android
 flutter build apk
 
-# Déploiement sur appareil connecté
-flutter run -d <device_id>
+# Déploiement sur appareil connecté (Pixel 7a)
+flutter run --release -d 34081JEHN11516
 
 # Lancement sur émulateur
 flutter emulators --launch <emulator_name>
@@ -39,13 +45,19 @@ flutter test
 
 # Analyse du code
 flutter analyze
+
+# Nettoyage build
+flutter clean && flutter pub get
 ```
 
 ## Configuration
-1. Créer fichier `.env` avec `GEMINI_API_KEY=your_key_here`
+1. Créer fichier `.env` avec:
+   - `GEMINI_API_KEY=your_key_here`
+   - `RAISE_API_KEY=your_key_here` (optionnel)
 2. Ajouter permissions Android dans `android/app/src/main/AndroidManifest.xml`:
    - `RECORD_AUDIO`
    - `INTERNET`
+   - `WRITE_EXTERNAL_STORAGE` (pour TTS Gemini)
 
 ## États de l'Assistant
 - `idle` - En attente
@@ -55,15 +67,36 @@ flutter analyze
 - `error` - Erreur rencontrée
 
 ## Fonctionnalités
-- Push-to-talk pour démarrer l'enregistrement
-- Interruption de la parole de l'assistant
-- Animations d'ondes réactives aux niveaux sonores
-- Historique conversationnel persistant
-- Interface simplifiée et moderne
-- Support multi-plateformes (Android, Web, Desktop)
+- **Multi-assistant**: Support Gemini (général) + Raise (spécialisés)
+- **TTS avancé**: Android TTS standard + Gemini AI TTS expérimental
+- **Interaction simplifiée**: Clic simple pour démarrer/arrêter l'enregistrement
+- **Sélection d'assistant**: Écran dédié avec persistance automatique
+- **Résumé automatique**: Réponses Raise longues résumées par Gemini
+- **Interruption**: Arrêt de la parole de l'assistant
+- **Animations**: Ondes réactives aux niveaux sonores
+- **Persistance**: Historique conversationnel et préférences utilisateur
+- **Interface moderne**: Design sombre avec transitions fluides
+- **Support multi-plateformes**: Android, Web, Desktop
 
 ## Notes de Déploiement
-- **Pixel 7a**: Reconnaissance vocale fonctionnelle
-- **Émulateur Android**: Limitations hardware pour reconnaissance vocale
-- **Web**: Version disponible sur localhost:8080
+- **Pixel 7a (34081JEHN11516)**: Reconnaissance vocale et TTS Gemini fonctionnels
+- **Émulateur Android**: Limitations hardware pour reconnaissance vocale et TTS Gemini
+- **Web**: Version disponible sur localhost:8080 (TTS Gemini non supporté)
+- **Android SDK**: Minimum 21, compilé avec SDK 33 pour compatibilité plugins
+- **Kotlin**: Version 1.8+ requise pour plugins TTS avancés
 - Créer émulateur avec Google Play Services: `flutter emulators --create --name pixel_with_play`
+
+## Architecture TTS
+- **Android TTS**: Service standard fiable via flutter_tts
+- **Gemini AI TTS**: Service expérimental via API REST + plugin Android natif
+  - Génération audio via Gemini API (model: gemini-2.5-flash-preview-tts)
+  - Création fichiers WAV avec headers corrects
+  - Lecture via MediaPlayer Android natif
+  - Fallback automatique vers Android TTS en cas d'erreur
+
+## États et Flux
+- **idle**: En attente d'interaction utilisateur
+- **listening**: Enregistrement vocal en cours
+- **thinking**: Traitement de la requête par l'assistant
+- **speaking**: Réponse vocale en cours de lecture
+- **error**: Erreur avec fallback automatique
