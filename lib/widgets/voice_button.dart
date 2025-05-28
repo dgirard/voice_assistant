@@ -102,7 +102,7 @@ class _VoiceButtonState extends State<VoiceButton>
 
   void _onPressStart(VoiceAssistantProvider provider) async {
     if (provider.state == AssistantState.idle) {
-      await provider.startListening();
+      await provider.startRecording();
     } else if (provider.state == AssistantState.speaking) {
       await provider.stopSpeaking();
     }
@@ -110,7 +110,7 @@ class _VoiceButtonState extends State<VoiceButton>
 
   void _onPressEnd(VoiceAssistantProvider provider) async {
     if (provider.state == AssistantState.listening) {
-      await provider.stopListening();
+      await provider.stopRecording();
     }
   }
 
