@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'providers/voice_assistant_provider.dart';
 import 'screens/voice_screen.dart';
+import 'screens/assistant_selection_screen.dart';
 import 'config/env_config.dart';
 
 void main() async {
@@ -41,6 +42,9 @@ class VoiceAssistantApp extends StatelessWidget {
           ),
         ),
         home: const VoiceScreen(),
+        routes: {
+          '/assistant-selection': (context) => const AssistantSelectionScreen(),
+        },
         debugShowCheckedModeBanner: false,
       ),
     );

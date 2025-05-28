@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import '../services/speech_service.dart';
 import '../services/ai_service.dart';
+import '../services/assistant_persistence.dart';
+import '../models/assistant.dart';
 import 'dart:async';
 
 enum AssistantState {
@@ -26,6 +28,12 @@ class VoiceAssistantProvider with ChangeNotifier {
   static const int _maxRetries = 3;
   static const int _maxHistoryItems = 100;
   
+  // Nouveaux champs pour multi-assistant
+  Assistant _selectedAssistant = Assistant.gemini();
+  List<Assistant> _availableAssistants = [];
+  String? _currentThreadId;
+  bool _isLoadingAssistants = false;
+  
   AssistantState get state => _state;
   String get currentText => _currentText;
   String get lastResponse => _lastResponse;
@@ -35,11 +43,22 @@ class VoiceAssistantProvider with ChangeNotifier {
   bool get isRecording => _isRecording;
   double get currentSoundLevel => _currentSoundLevel;
   
+  // Nouveaux getters pour multi-assistant
+  Assistant get selectedAssistant => _selectedAssistant;
+  List<Assistant> get availableAssistants => _availableAssistants;
+  bool get isLoadingAssistants => _isLoadingAssistants;
+  
   Future<void> initialize() async {
     try {
       _isInitialized = await _speechService.initialize();
       if (_isInitialized) {
         _setState(AssistantState.idle);
+        
+        // Charger l'assistant sélectionné depuis les préférences
+        await _loadSelectedAssistant();
+        
+        // Charger la liste des assistants disponibles
+        await _loadAvailableAssistants();
       } else {
         _setState(AssistantState.error);
       }
@@ -134,16 +153,34 @@ class VoiceAssistantProvider with ChangeNotifier {
       // Formater le prompt
       String prompt = _aiService.formatPromptForAssistant(userInput);
       
-      // Obtenir la réponse de l'IA avec l'historique de conversation
-      String response = await _aiService.generateResponse(prompt, _conversationHistory);
+      // Obtenir la réponse de l'IA selon le type d'assistant
+      String response;
+      if (_selectedAssistant.type == AssistantType.gemini) {
+        response = await _aiService.generateResponse(
+          prompt,
+          conversationHistory: _conversationHistory,
+        );
+      } else {
+        // Assistant Raise - créer un thread si nécessaire
+        _currentThreadId ??= await _aiService.createRaiseThread(_selectedAssistant);
+        
+        response = await _aiService.generateResponse(
+          prompt,
+          assistant: _selectedAssistant,
+          threadId: _currentThreadId,
+        );
+      }
       _lastResponse = response;
       
       // Remplacer le message temporaire
       _conversationHistory[_conversationHistory.length - 1] = 'Assistant: $response';
       
-      // Parler la réponse
+      // Nettoyer la réponse pour la synthèse vocale
+      String cleanedResponse = _cleanResponseForTTS(response);
+      
+      // Parler la réponse nettoyée
       _setState(AssistantState.speaking);
-      await _speechService.speak(response);
+      await _speechService.speak(cleanedResponse);
       
       // Retour à l'état idle
       _setState(AssistantState.idle);
@@ -176,7 +213,88 @@ class VoiceAssistantProvider with ChangeNotifier {
     _conversationHistory.clear();
     _currentText = '';
     _lastResponse = '';
+    
+    // Reset du thread pour assistants Raise
+    if (_selectedAssistant.type == AssistantType.raise) {
+      _currentThreadId = null;
+    }
+    
     notifyListeners();
+  }
+
+  // Nouvelles méthodes pour la gestion multi-assistant
+  
+  Future<void> _loadSelectedAssistant() async {
+    final savedAssistant = await AssistantPersistence.getSelectedAssistant();
+    if (savedAssistant != null) {
+      _selectedAssistant = savedAssistant;
+    }
+  }
+
+  Future<void> _loadAvailableAssistants() async {
+    _isLoadingAssistants = true;
+    notifyListeners();
+    
+    try {
+      _availableAssistants = await _aiService.getAvailableAssistants();
+      
+      // Vérifier si l'assistant sélectionné est toujours disponible
+      final isSelectedAvailable = _availableAssistants.any(
+        (assistant) => assistant.id == _selectedAssistant.id && 
+                      assistant.type == _selectedAssistant.type
+      );
+      
+      if (!isSelectedAvailable) {
+        // Fallback vers Gemini si l'assistant sélectionné n'est plus disponible
+        _selectedAssistant = Assistant.gemini();
+        await AssistantPersistence.saveSelectedAssistant(_selectedAssistant);
+      }
+    } catch (e) {
+      print('Erreur lors du chargement des assistants: $e');
+      _availableAssistants = [Assistant.gemini()];
+    } finally {
+      _isLoadingAssistants = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> selectAssistant(Assistant assistant) async {
+    if (_selectedAssistant == assistant) return;
+    
+    final previousAssistant = _selectedAssistant;
+    _selectedAssistant = assistant;
+    
+    // Sauvegarder le choix
+    await AssistantPersistence.saveSelectedAssistant(assistant);
+    
+    // Nouvelle conversation si changement d'assistant
+    clearHistory();
+    
+    // Si passage d'un assistant Raise à un autre, reset le thread
+    if (previousAssistant.type == AssistantType.raise || 
+        assistant.type == AssistantType.raise) {
+      _currentThreadId = null;
+    }
+    
+    notifyListeners();
+  }
+
+  Future<void> refreshAssistants() async {
+    await _loadAvailableAssistants();
+  }
+
+  // Nettoyer la réponse pour la synthèse vocale
+  String _cleanResponseForTTS(String response) {
+    // Supprimer tout ce qui est entre parenthèses
+    String cleaned = response.replaceAll(RegExp(r'\([^)]*\)'), '');
+    
+    // Supprimer les espaces multiples
+    cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ');
+    
+    // Supprimer les espaces en début et fin
+    cleaned = cleaned.trim();
+    
+    return cleaned;
   }
   
   void _setState(AssistantState newState) {

@@ -54,9 +54,7 @@ class _VoiceRecordButtonState extends State<VoiceRecordButton>
         _updateAnimation(provider.state);
 
         return GestureDetector(
-          onTapDown: (_) => _onPressStart(provider),
-          onTapUp: (_) => _onPressEnd(provider),
-          onTapCancel: () => _onPressEnd(provider),
+          onTap: () => _onTap(provider),
           child: AnimatedBuilder(
             animation: _animationController,
             builder: (context, child) {
@@ -119,22 +117,28 @@ class _VoiceRecordButtonState extends State<VoiceRecordButton>
     }
   }
 
-  void _onPressStart(VoiceAssistantProvider provider) async {
-    if (provider.state == AssistantState.idle) {
-      // Démarrer l'enregistrement seulement si idle
-      await provider.startRecording();
-    } else if (provider.state == AssistantState.speaking) {
-      // Arrêter la synthèse vocale si l'assistant parle
-      await provider.stopSpeaking();
-    } else if (provider.state == AssistantState.thinking) {
-      // Optionnel : permettre d'interrompre la réflexion
-      await provider.stopSpeaking(); // Ceci remettra l'état à idle
-    }
-  }
-
-  void _onPressEnd(VoiceAssistantProvider provider) async {
-    if (provider.state == AssistantState.listening && provider.isRecording) {
-      await provider.stopRecording();
+  void _onTap(VoiceAssistantProvider provider) async {
+    switch (provider.state) {
+      case AssistantState.idle:
+        // Démarrer l'enregistrement
+        await provider.startRecording();
+        break;
+      case AssistantState.listening:
+        // Arrêter l'enregistrement
+        if (provider.isRecording) {
+          await provider.stopRecording();
+        }
+        break;
+      case AssistantState.speaking:
+        // Arrêter la synthèse vocale
+        await provider.stopSpeaking();
+        break;
+      case AssistantState.thinking:
+        // Optionnel : permettre d'interrompre la réflexion
+        await provider.stopSpeaking();
+        break;
+      default:
+        break;
     }
   }
 
@@ -156,7 +160,7 @@ class _VoiceRecordButtonState extends State<VoiceRecordButton>
   String _getTextForState(AssistantState state) {
     switch (state) {
       case AssistantState.listening:
-        return 'Relâchez...';
+        return 'Arrêter';
       case AssistantState.thinking:
         return 'Réflexion...';
       case AssistantState.speaking:
@@ -164,7 +168,7 @@ class _VoiceRecordButtonState extends State<VoiceRecordButton>
       case AssistantState.error:
         return 'Erreur';
       default:
-        return 'Appuyez';
+        return 'Parler';
     }
   }
 

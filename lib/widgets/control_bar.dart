@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
+import 'package:provider/provider.dart';
+import '../providers/voice_assistant_provider.dart';
+import '../models/assistant.dart';
 
 class ControlBar extends StatelessWidget {
   final VoidCallback? onCameraPressed;
@@ -31,28 +33,80 @@ class ControlBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            // Bouton Caméra
-            _buildControlButton(
-              icon: isCameraOn ? Icons.videocam : Icons.videocam_off,
-              onPressed: onCameraPressed,
-              backgroundColor: const Color(0xFF333333),
+            // Icône d'assistant à gauche
+            Expanded(
+              flex: 1,
+              child: Consumer<VoiceAssistantProvider>(
+                builder: (context, provider, child) {
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, '/assistant-selection');
+                    },
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6B7FD7),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF6B7FD7).withOpacity(0.3),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Icon(
+                          provider.selectedAssistant.type == AssistantType.gemini
+                              ? Icons.psychology
+                              : Icons.smart_toy,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
             
-            // Bouton Partager/Upload
-            _buildControlButton(
-              icon: Icons.ios_share,
-              onPressed: onSharePressed,
-              backgroundColor: const Color(0xFF333333),
-            ),
-            
-            // Bouton Fermer (rouge)
-            _buildControlButton(
-              icon: Icons.close,
-              onPressed: onClosePressed,
-              backgroundColor: const Color(0xFFFF3B30),
-              isCloseButton: true,
+            // Boutons à droite
+            Expanded(
+              flex: 2,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  // Bouton Caméra
+                  Flexible(
+                    child: _buildControlButton(
+                      icon: isCameraOn ? Icons.videocam : Icons.videocam_off,
+                      onPressed: onCameraPressed,
+                      backgroundColor: const Color(0xFF333333),
+                    ),
+                  ),
+                  
+                  // Bouton Partager/Upload
+                  Flexible(
+                    child: _buildControlButton(
+                      icon: Icons.ios_share,
+                      onPressed: onSharePressed,
+                      backgroundColor: const Color(0xFF333333),
+                    ),
+                  ),
+                  
+                  // Bouton Fermer (rouge)
+                  Flexible(
+                    child: _buildControlButton(
+                      icon: Icons.close,
+                      onPressed: onClosePressed,
+                      backgroundColor: const Color(0xFFFF3B30),
+                      isCloseButton: true,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -67,34 +121,27 @@ class ControlBar extends StatelessWidget {
     bool isCloseButton = false,
   }) {
     return GestureDetector(
-      onTapDown: (_) {
-        // Effet de pression visuel
-      },
-      onTapUp: (_) {
-        onPressed?.call();
-      },
-      onTapCancel: () {
-        // Reset de l'effet de pression
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        width: isCloseButton ? 64 : 56,
-        height: isCloseButton ? 40 : 56,
+      onTap: onPressed,
+      child: Container(
+        width: isCloseButton ? 40 : 36,
+        height: isCloseButton ? 28 : 36,
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.circular(isCloseButton ? 20 : 16),
+          borderRadius: BorderRadius.circular(isCloseButton ? 14 : 10),
           boxShadow: [
             BoxShadow(
               color: backgroundColor.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Icon(
-          icon,
-          color: Colors.white,
-          size: isCloseButton ? 24 : 28,
+        child: Center(
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: isCloseButton ? 16 : 18,
+          ),
         ),
       ),
     );
