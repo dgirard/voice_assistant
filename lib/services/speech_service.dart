@@ -11,6 +11,7 @@ class SpeechService {
   bool _speechAvailable = false;
   String _lastWords = '';
   String _currentLocale = 'fr-FR';
+  bool _isUpdatingLanguage = false;
   
   bool get isListening => _speechToText.isListening;
   bool get speechEnabled => _speechEnabled;
@@ -18,6 +19,12 @@ class SpeechService {
   String get currentLocale => _currentLocale;
   
   Function(String)? _onErrorCallback;
+  
+  /// Définir la langue avant l'initialisation
+  void setInitialLanguage(String localeId) {
+    _currentLocale = localeId;
+    print('Langue initiale définie: $_currentLocale');
+  }
   
   Future<bool> initialize() async {
     var permissionStatus = await Permission.microphone.request();
@@ -87,34 +94,58 @@ class SpeechService {
   }
   
   Future<void> updateLanguage(String localeId) async {
-    _currentLocale = localeId;
-    
-    // Reconfigurer TTS avec la nouvelle langue
-    await _flutterTts.setLanguage(_currentLocale);
-    
-    // Arrêter l'écoute actuelle si en cours
-    if (_speechToText.isListening) {
-      await _speechToText.cancel();
+    // Éviter les appels concurrents
+    if (_isUpdatingLanguage) {
+      print('Mise à jour de langue déjà en cours, ignorer...');
+      return;
     }
     
-    // Réinitialiser le service de reconnaissance vocale avec la nouvelle langue
-    if (_speechEnabled) {
-      await _speechToText.stop();
-      // Petit délai pour s'assurer que le service est complètement arrêté
-      await Future.delayed(const Duration(milliseconds: 100));
+    _isUpdatingLanguage = true;
+    
+    try {
+      _currentLocale = localeId;
       
-      // Réinitialiser avec la nouvelle configuration de langue
-      _speechEnabled = await _speechToText.initialize(
-        onStatus: (status) => print('Speech status: $status'),
-        onError: (error) {
-          print('Speech error: $error');
-          if (_onErrorCallback != null) {
-            _onErrorCallback!(error.errorMsg);
-          }
-        },
-      );
+      // Reconfigurer TTS avec la nouvelle langue
+      await _flutterTts.setLanguage(_currentLocale);
       
-      print('Speech service réinitialisé pour la langue: $_currentLocale');
+      // Arrêter l'écoute actuelle si en cours de façon sûre
+      if (_speechToText.isListening) {
+        try {
+          await _speechToText.cancel();
+        } catch (e) {
+          print('Erreur lors de l\'arrêt de l\'écoute: $e');
+        }
+      }
+      
+      // Réinitialiser le service de reconnaissance vocale avec la nouvelle langue
+      // Seulement si nécessaire (optimisation)
+      if (_speechEnabled && localeId != _currentLocale) {
+        try {
+          await _speechToText.stop();
+          // Petit délai pour s'assurer que le service est complètement arrêté
+          await Future.delayed(const Duration(milliseconds: 200));
+          
+          // Réinitialiser avec la nouvelle configuration de langue
+          _speechEnabled = await _speechToText.initialize(
+            onStatus: (status) => print('Speech status: $status'),
+            onError: (error) {
+              print('Speech error: $error');
+              if (_onErrorCallback != null) {
+                _onErrorCallback!(error.errorMsg);
+              }
+            },
+          );
+          
+          print('Speech service réinitialisé pour la langue: $_currentLocale');
+        } catch (e) {
+          print('Erreur lors de la réinitialisation du speech service: $e');
+          // En cas d'erreur, essayer une réinitialisation complète
+          _speechEnabled = false;
+          await initialize();
+        }
+      }
+    } finally {
+      _isUpdatingLanguage = false;
     }
   }
 
@@ -123,7 +154,18 @@ class SpeechService {
   }
 
   void dispose() {
-    _speechToText.cancel();
-    _flutterTts.stop();
+    try {
+      if (_speechToText.isListening) {
+        _speechToText.cancel();
+      }
+    } catch (e) {
+      print('Erreur lors du dispose speech: $e');
+    }
+    
+    try {
+      _flutterTts.stop();
+    } catch (e) {
+      print('Erreur lors du dispose TTS: $e');
+    }
   }
 }
