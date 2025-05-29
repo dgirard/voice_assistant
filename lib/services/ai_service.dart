@@ -55,7 +55,9 @@ class AIService {
   Future<String> _summarizeWithGemini(String text) async {
     final summarizePrompt = 
         "Résume ce texte en exactement 100 mots maximum pour une réponse vocale, "
-        "en gardant les informations les plus importantes comme les noms propres : $text";
+        "en gardant les informations les plus importantes comme les noms propres. "
+        "Ensuite, propose 2-3 questions courtes pour approfondir le sujet. "
+        "Format: [RÉSUMÉ] suivi de [QUESTIONS] avec les questions numérotées : $text";
     
     return _generateGeminiResponse(summarizePrompt, null);
   }
