@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'providers/voice_assistant_provider.dart';
+import 'providers/language_provider.dart';
 import 'screens/voice_screen.dart';
 import 'screens/assistant_selection_screen.dart';
+import 'screens/settings_screen.dart';
+import 'screens/gemini_tts_test_screen.dart';
 import 'config/env_config.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,24 +33,45 @@ class VoiceAssistantApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => VoiceAssistantProvider(),
-      child: MaterialApp(
-        title: 'Assistant Vocal',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          scaffoldBackgroundColor: Colors.grey[50],
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Colors.blue,
-            elevation: 0,
-            centerTitle: true,
-          ),
-        ),
-        home: const VoiceScreen(),
-        routes: {
-          '/assistant-selection': (context) => const AssistantSelectionScreen(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => LanguageProvider()),
+        ChangeNotifierProvider(create: (context) => VoiceAssistantProvider()),
+      ],
+      child: Consumer2<LanguageProvider, VoiceAssistantProvider>(
+        builder: (context, languageProvider, voiceProvider, child) {
+          // Connecter le LanguageProvider au VoiceAssistantProvider
+          voiceProvider.setLanguageProvider(languageProvider);
+          
+          return MaterialApp(
+            title: 'Voice Assistant',
+            theme: ThemeData(
+              primarySwatch: Colors.blue,
+              scaffoldBackgroundColor: Colors.grey[50],
+              appBarTheme: const AppBarTheme(
+                backgroundColor: Colors.blue,
+                elevation: 0,
+                centerTitle: true,
+              ),
+            ),
+            // Internationalization configuration
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: LanguageProvider.supportedLocales,
+            locale: languageProvider.currentLocale,
+            home: const VoiceScreen(),
+            routes: {
+              '/assistant-selection': (context) => const AssistantSelectionScreen(),
+              '/settings': (context) => const SettingsScreen(),
+              '/gemini-tts-test': (context) => const GeminiTtsTestScreen(),
+            },
+            debugShowCheckedModeBanner: false,
+          );
         },
-        debugShowCheckedModeBanner: false,
       ),
     );
   }

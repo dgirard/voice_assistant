@@ -50,8 +50,10 @@ class _VoiceRecordButtonState extends State<VoiceRecordButton>
   Widget build(BuildContext context) {
     return Consumer<VoiceAssistantProvider>(
       builder: (context, provider, child) {
-        // Gérer les animations selon l'état
-        _updateAnimation(provider.state);
+        // Gérer les animations selon l'état seulement si nécessaire
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _updateAnimation(provider.state);
+        });
 
         return GestureDetector(
           onTap: () => _onTap(provider),
@@ -134,8 +136,8 @@ class _VoiceRecordButtonState extends State<VoiceRecordButton>
         await provider.stopSpeaking();
         break;
       case AssistantState.thinking:
-        // Optionnel : permettre d'interrompre la réflexion
-        await provider.stopSpeaking();
+        // Interrompre la réflexion et reset complet
+        await provider.resetToInitialState();
         break;
       default:
         break;
@@ -162,7 +164,7 @@ class _VoiceRecordButtonState extends State<VoiceRecordButton>
       case AssistantState.listening:
         return 'Arrêter';
       case AssistantState.thinking:
-        return 'Réflexion...';
+        return 'Arrêter';
       case AssistantState.speaking:
         return 'Arrêter';
       case AssistantState.error:

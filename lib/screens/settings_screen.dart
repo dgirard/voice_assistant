@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../providers/voice_assistant_provider.dart';
 import '../services/tts_service.dart';
 import '../widgets/tts_engine_selector.dart';
+import '../widgets/language_selector.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -11,7 +13,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Paramètres'),
+        title: Text(AppLocalizations.of(context)?.settings ?? 'Paramètres'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: Theme.of(context).primaryColor,
@@ -43,9 +45,9 @@ class SettingsScreen extends StatelessWidget {
                     color: Theme.of(context).primaryColor,
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Configuration',
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context)?.settings ?? 'Configuration',
+                    style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                     ),
@@ -60,6 +62,12 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+            
+            // Language Selector
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: LanguageSelector(),
             ),
             
             // TTS Engine Selector

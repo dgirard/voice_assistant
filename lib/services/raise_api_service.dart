@@ -6,6 +6,9 @@ import '../models/assistant.dart';
 class RaiseApiService {
   static const String baseUrl = 'https://raise.sfeir.com';
   late final String _apiKey;
+  
+  // Gestion des requêtes HTTP en cours
+  final List<http.Client> _activeClients = [];
 
   RaiseApiService() {
     _apiKey = dotenv.env['RAISE_API_KEY'] ?? '';
@@ -121,5 +124,20 @@ class RaiseApiService {
 
   bool shouldSummarize(String response) {
     return _countWords(response) > 100;
+  }
+  
+  /// Annuler toutes les requêtes HTTP en cours
+  void cancelAllRequests() {
+    print('🚫 Annulation des requêtes Raise API...');
+    
+    // Fermer tous les clients HTTP actifs
+    for (final client in _activeClients) {
+      try {
+        client.close();
+      } catch (e) {
+        print('Erreur lors de la fermeture du client Raise: $e');
+      }
+    }
+    _activeClients.clear();
   }
 }

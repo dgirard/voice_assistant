@@ -1,0 +1,180 @@
+# Spécification des Améliorations UX/UI - Assistant Vocal
+
+## Vue d'ensemble
+Cette spécification détaille les améliorations UX/UI à implémenter pour l'assistant vocal, basées sur l'analyse des écrans existants et des propositions d'amélioration.
+
+## Objectifs Généraux
+1. **Clarté des États** : L'utilisateur doit toujours comprendre l'état actuel de l'assistant
+2. **Actions Contextuelles** : Adapter les boutons disponibles selon l'état de l'interaction
+3. **Cohérence Visuelle** : Harmoniser l'identité visuelle dans toute l'application
+4. **Accessibilité** : Améliorer la lisibilité et l'accessibilité
+
+## 1. Améliorations Globales
+
+### 1.1 Identité Visuelle
+- **Palette de couleurs** : Utiliser une palette cohérente avec l'identité de marque
+- **Arrière-plan** : Implémenter un arrière-plan subtil évoquant le Mont-Blanc (texture roche/neige)
+- **Typographie** : Harmoniser les polices (actuellement Chakra Petch)
+
+### 1.2 Indicateur de Langue
+- **Position** : Maintenir en haut à droite (actuellement `top: 120, right: 20`)
+- **Cohérence** : S'assurer que le drapeau correspond à la langue active
+- **Interactivité** : Rendre cliquable pour changement rapide de langue
+
+## 2. États de l'Interface
+
+### 2.1 État Initial/Idle (Écran 1)
+
+#### 2.1.1 Bouton Microphone Principal
+**Fichier** : `lib/widgets/voice_record_button.dart`
+- **Supprimer** le texte "Parler" redondant sous l'icône
+- **Ajouter** une animation de pulsation subtile quand l'assistant est prêt
+- **Conserver** l'instruction "Maintenez le bouton pour enregistrer..."
+
+#### 2.1.2 Barre d'Actions Inférieure (État Initial)
+**Fichier** : `lib/widgets/control_bar.dart`
+- **Supprimer** : Icône robot (première à gauche)
+- **Ajouter** : Icône clavier pour saisie texte alternative
+- **Conserver** : Icône paramètres (roue crantée)
+- **Supprimer** : Icône upload/partager (non pertinente à ce stade)
+- **Conserver** : Icône fermer (croix)
+
+**Configuration suggérée** : `[Clavier] [Paramètres] [Fermer]`
+
+### 2.2 État Enregistrement (En cours)
+
+#### 2.2.1 Feedback Visuel
+**Fichier** : `lib/widgets/voice_record_button.dart`
+- **Agrandissement** : Bouton s'agrandit légèrement quand maintenu
+- **Changement couleur** : Passer à la couleur d'accent de la marque
+- **Animation onde** : Afficher animation d'onde sonore autour du bouton
+- **Texte dynamique** : Remplacer instruction par "Je vous écoute..." ou "Relâchez pour envoyer"
+
+### 2.3 État Réponse (Écran 2)
+
+#### 2.3.1 Bouton Microphone Principal - CHANGEMENT MAJEUR
+**Fichier** : `lib/screens/voice_screen.dart`
+- **Problème actuel** : Le gros bouton "Parler" reste proéminent pendant l'affichage de la réponse
+- **Solution A (Préférée)** : 
+  - Réduire et déplacer le bouton vocal vers la barre d'actions inférieure
+  - Donner plus d'espace à l'affichage de la réponse
+- **Solution B (Alternative)** :
+  - Transformer en bouton "Nouvelle question" plus petit
+  - Désactiver temporairement pendant la lecture de la réponse
+
+#### 2.3.2 Affichage de la Réponse
+**Fichier** : `lib/widgets/speech_text_display.dart`
+- **Contraste** : Améliorer le contraste texte/fond de la bulle
+- **Taille police** : Augmenter légèrement ou offrir option d'ajustement
+- **Indicateur [RÉSUMÉ]** : Styliser avec couleur d'accent
+- **Défilement automatique** : Implémenter scroll automatique pour réponses longues
+
+#### 2.3.3 Barre d'Actions Inférieure (État Réponse)
+**Fichier** : `lib/widgets/control_bar.dart`
+- **Nouvelle requête vocale** : Icône microphone (plus petite)
+- **Lecture audio** : Icône haut-parleur pour relire la réponse
+- **Partager** : Icône upload/partager (pertinente ici)
+- **Feedback** : Icônes pouce haut/bas pour évaluer la réponse
+- **Fermer** : Icône croix ou flèche retour
+
+**Configuration suggérée** : `[Micro] [Partager] [👍] [👎] [Fermer]`
+
+## 3. Animations et Transitions
+
+### 3.1 Animations du Bouton Principal
+**Fichier** : `lib/widgets/voice_record_button.dart`
+- **État idle** : Pulsation lente (2-3 secondes)
+- **État pressed** : Agrandissement + changement couleur
+- **Transition** : Animations fluides entre états
+
+### 3.2 Animations des Ondes
+**Fichier** : `lib/widgets/wave_animation.dart`
+- **État enregistrement** : Ondes réactives au niveau sonore
+- **État réponse** : Ondes synchronisées avec la lecture TTS
+
+## 4. Composants à Modifier/Créer
+
+### 4.1 Modifications Requises
+1. **VoiceRecordButton** (`lib/widgets/voice_record_button.dart`)
+   - Supprimer texte "Parler"
+   - Ajouter animations d'état
+   - Gérer textes d'instruction dynamiques
+
+2. **ControlBar** (`lib/widgets/control_bar.dart`)
+   - Rendre contextuelle selon l'état
+   - Ajouter nouveaux boutons (clavier, feedback)
+   - Supprimer boutons non pertinents par état
+
+3. **VoiceScreen** (`lib/screens/voice_screen.dart`)
+   - Repositionner bouton principal selon état
+   - Adapter layout pour état réponse
+
+4. **SpeechTextDisplay** (`lib/widgets/speech_text_display.dart`)
+   - Améliorer contraste et lisibilité
+   - Ajouter défilement automatique
+   - Styliser indicateur [RÉSUMÉ]
+
+### 4.2 Nouveaux Composants
+1. **TextInputWidget** : Pour saisie clavier alternative
+2. **FeedbackWidget** : Pour évaluation des réponses (pouce haut/bas)
+3. **BackgroundWidget** : Pour arrière-plan thématique Mont-Blanc
+
+## 5. États de l'Assistant et Interface
+
+### 5.1 Mapping État → Interface
+```dart
+enum AssistantState {
+  idle,        // → Interface initiale avec bouton principal proéminent
+  listening,   // → Bouton agrandi + animation onde + texte dynamique
+  thinking,    // → Bouton désactivé + indicateur de traitement
+  speaking,    // → Bouton réduit + barre contextuelle + affichage réponse
+  error        // → Bouton reset + message d'erreur
+}
+```
+
+### 5.2 Actions Contextuelles par État
+- **idle** : `[Clavier] [Paramètres] [Fermer]`
+- **listening** : `[Annuler] [Paramètres]`
+- **thinking** : `[Annuler]`
+- **speaking** : `[Micro] [Partager] [👍] [👎] [Fermer]`
+- **error** : `[Retry] [Paramètres] [Fermer]`
+
+## 6. Implémentation Progressive
+
+### Phase 1 : Corrections Critiques
+1. Gestion du bouton principal selon l'état
+2. Barre d'actions contextuelle
+3. Amélioration affichage réponse
+
+### Phase 2 : Améliorations Visuelles
+1. Animations d'état
+2. Identité visuelle renforcée
+3. Arrière-plan thématique
+
+### Phase 3 : Fonctionnalités Avancées
+1. Saisie clavier alternative
+2. Système de feedback
+3. Options d'accessibilité
+
+## 7. Tests et Validation
+
+### 7.1 Tests d'Interface
+- Transition fluide entre tous les états
+- Cohérence des actions disponibles
+- Lisibilité sur différentes tailles d'écran
+
+### 7.2 Tests d'Accessibilité
+- Contraste suffisant (WCAG AA)
+- Navigation keyboard/screen reader
+- Tailles de touche appropriées
+
+### 7.3 Tests Utilisateur
+- Intuitivité des actions contextuelles
+- Clarté des états de l'assistant
+- Satisfaction générale de l'expérience
+
+## 8. Métriques de Succès
+- Réduction du temps de compréhension de l'état actuel
+- Diminution des erreurs d'interaction utilisateur
+- Amélioration du score de satisfaction UX
+- Réduction des clics/taps nécessaires pour les actions courantes

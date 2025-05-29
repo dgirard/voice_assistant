@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/voice_assistant_provider.dart';
+import '../providers/language_provider.dart';
 import '../models/assistant.dart';
 
 class ControlBar extends StatelessWidget {
   final VoidCallback? onCameraPressed;
-  final VoidCallback? onSharePressed;
   final VoidCallback? onPausePressed;
   final VoidCallback? onClosePressed;
   final bool isPaused;
@@ -14,7 +14,6 @@ class ControlBar extends StatelessWidget {
   const ControlBar({
     Key? key,
     this.onCameraPressed,
-    this.onSharePressed,
     this.onPausePressed,
     this.onClosePressed,
     this.isPaused = false,
@@ -87,12 +86,19 @@ class ControlBar extends StatelessWidget {
                     ),
                   ),
                   
-                  // Bouton Partager/Upload
+                  // Sélecteur de langue
+                  Flexible(
+                    child: _buildLanguageSelector(context),
+                  ),
+                  
+                  // Bouton Paramètres
                   Flexible(
                     child: _buildControlButton(
-                      icon: Icons.ios_share,
-                      onPressed: onSharePressed,
-                      backgroundColor: const Color(0xFF333333),
+                      icon: Icons.settings,
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/settings');
+                      },
+                      backgroundColor: const Color(0xFF6B7FD7),
                     ),
                   ),
                   
@@ -144,6 +150,55 @@ class ControlBar extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildLanguageSelector(BuildContext context) {
+    return Consumer<LanguageProvider>(
+      builder: (context, languageProvider, child) {
+        return PopupMenuButton<Locale>(
+          icon: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: const Color(0xFF333333),
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF333333).withOpacity(0.3),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                languageProvider.getLanguageFlag(languageProvider.currentLocale),
+                style: const TextStyle(fontSize: 18),
+              ),
+            ),
+          ),
+          onSelected: (locale) => languageProvider.changeLanguage(locale),
+          itemBuilder: (context) => LanguageProvider.supportedLocales
+              .map((locale) => PopupMenuItem(
+                    value: locale,
+                    child: Row(
+                      children: [
+                        Text(
+                          languageProvider.getLanguageFlag(locale),
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          languageProvider.getLanguageName(locale, context),
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ))
+              .toList(),
+        );
+      },
     );
   }
 }

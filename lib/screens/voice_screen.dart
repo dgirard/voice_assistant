@@ -5,6 +5,7 @@ import '../widgets/wave_animation.dart';
 import '../widgets/control_bar.dart';
 import '../widgets/speech_text_display.dart';
 import '../widgets/voice_record_button.dart';
+import '../widgets/language_selector.dart';
 
 class VoiceScreen extends StatefulWidget {
   const VoiceScreen({Key? key}) : super(key: key);
@@ -104,7 +105,6 @@ class _VoiceScreenState extends State<VoiceScreen> {
                   isPaused: false, // Plus de logique pause/play
                   isCameraOn: _isCameraOn,
                   onCameraPressed: _toggleCamera,
-                  onSharePressed: _shareAction,
                   onPausePressed: null, // Bouton pause supprimé
                   onClosePressed: _startNewConversation,
                 ),
@@ -130,6 +130,8 @@ class _VoiceScreenState extends State<VoiceScreen> {
                     ],
                   ),
                 ),
+              
+              
             ],
           );
         },
@@ -157,23 +159,20 @@ class _VoiceScreenState extends State<VoiceScreen> {
   }
   
   void _toggleCamera() {
-    setState(() {
-      _isCameraOn = !_isCameraOn;
-    });
+    if (mounted) {
+      setState(() {
+        _isCameraOn = !_isCameraOn;
+      });
+    }
   }
   
   // Méthode supprimée - plus de logique pause/play
   
-  void _startNewConversation() {
+  void _startNewConversation() async {
     final provider = context.read<VoiceAssistantProvider>();
     
-    // Arrêter toute activité en cours
-    if (provider.state == AssistantState.speaking) {
-      provider.stopSpeaking();
-    }
-    
-    // Vider l'historique
-    provider.clearHistory();
+    // Reset complet de l'application - comme au démarrage
+    await provider.resetToInitialState();
     
     // Afficher un message de confirmation
     ScaffoldMessenger.of(context).showSnackBar(
@@ -183,7 +182,7 @@ class _VoiceScreenState extends State<VoiceScreen> {
             Icon(Icons.refresh, color: Colors.white, size: 20),
             SizedBox(width: 12),
             Text(
-              'Nouvelle conversation démarrée',
+              'Application réinitialisée',
               style: TextStyle(
                 fontFamily: 'Chakra Petch',
                 fontSize: 14,
@@ -203,13 +202,4 @@ class _VoiceScreenState extends State<VoiceScreen> {
     );
   }
   
-  void _shareAction() {
-    // Implémentation du partage
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Fonction de partage'),
-        backgroundColor: Color(0xFF333333),
-      ),
-    );
-  }
 }

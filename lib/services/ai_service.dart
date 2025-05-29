@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import '../config/env_config.dart';
 import '../models/assistant.dart';
+import '../models/language_config.dart';
 import '../services/raise_api_service.dart';
 
 class AIService {
@@ -10,7 +12,18 @@ class AIService {
   // Clé API chargée depuis les variables d'environnement
   String get _apiKey => EnvConfig.geminiApiKey;
   
+  // Configuration linguistique
+  LanguageConfig _languageConfig = LanguageConfig.french();
+  
   final RaiseApiService _raiseService = RaiseApiService();
+  
+  // Gestion des requêtes HTTP en cours
+  final List<http.Client> _activeClients = [];
+  bool _isCancelled = false;
+  
+  void updateLanguageConfig(LanguageConfig config) {
+    _languageConfig = config;
+  }
   
   Future<String> generateResponse(
     String prompt, {
@@ -53,65 +66,82 @@ class AIService {
   }
 
   Future<String> _summarizeWithGemini(String text) async {
-    final summarizePrompt = 
-        "Résume ce texte en exactement 100 mots maximum pour une réponse vocale, "
-        "en gardant les informations les plus importantes comme les noms propres. "
-        "Ensuite, propose 2-3 questions courtes pour approfondir le sujet. "
-        "Format: [RÉSUMÉ] suivi de [QUESTIONS] avec les questions numérotées : $text";
+    final summarizePrompt = _languageConfig.aiSummarizePrompt + text;
     
     return _generateGeminiResponse(summarizePrompt, null);
   }
 
+  String _getSystemResponseForLanguage() {
+    switch (_languageConfig.speechToTextLocale.split('-')[0]) {
+      case 'en':
+        return 'Understood! I am your voice assistant. I will respond naturally and conversationally in English. How can I help you?';
+      case 'ja':
+        return '分かりました！私はあなたの音声アシスタントです。日本語で自然に会話形式で回答します。どのようにお手伝いできますか？';
+      case 'fr':
+      default:
+        return 'Compris ! Je suis votre assistant vocal. Je répondrai de manière naturelle et conversationnelle en français. Comment puis-je vous aider ?';
+    }
+  }
+
   Future<String> _generateGeminiResponse(String prompt, [List<String>? conversationHistory]) async {
-    try {
-      // Construire l'historique de conversation pour Gemini
-      List<Map<String, dynamic>> contents = [];
-      
-      // Ajouter l'instruction système
-      contents.add({
-        'role': 'user',
-        'parts': [
-          {'text': 'Tu es un assistant vocal intelligent et serviable. Réponds de manière conversationnelle et naturelle en français. Garde tes réponses concises mais informatives.'}
-        ]
-      });
-      
-      contents.add({
-        'role': 'model',
-        'parts': [
-          {'text': 'Compris ! Je suis votre assistant vocal. Je répondrai de manière naturelle et conversationnelle en français. Comment puis-je vous aider ?'}
-        ]
-      });
-      
-      // Ajouter l'historique de conversation si disponible
-      if (conversationHistory != null && conversationHistory.isNotEmpty) {
-        for (String message in conversationHistory) {
-          if (message.startsWith('Vous: ')) {
-            contents.add({
-              'role': 'user',
-              'parts': [
-                {'text': message.substring(6)} // Retirer "Vous: "
-              ]
-            });
-          } else if (message.startsWith('Assistant: ') && !message.contains('[En cours...]')) {
-            contents.add({
-              'role': 'model',
-              'parts': [
-                {'text': message.substring(11)} // Retirer "Assistant: "
-              ]
-            });
-          }
+    // Construire l'historique de conversation pour Gemini
+    List<Map<String, dynamic>> contents = [];
+    
+    // Ajouter l'instruction système localisée
+    contents.add({
+      'role': 'user',
+      'parts': [
+        {'text': _languageConfig.aiSystemPrompt}
+      ]
+    });
+    
+    contents.add({
+      'role': 'model',
+      'parts': [
+        {'text': _getSystemResponseForLanguage()}
+      ]
+    });
+    
+    // Ajouter l'historique de conversation si disponible
+    if (conversationHistory != null && conversationHistory.isNotEmpty) {
+      for (String message in conversationHistory) {
+        if (message.startsWith('Vous: ')) {
+          contents.add({
+            'role': 'user',
+            'parts': [
+              {'text': message.substring(6)} // Retirer "Vous: "
+            ]
+          });
+        } else if (message.startsWith('Assistant: ') && !message.contains('[En cours...]')) {
+          contents.add({
+            'role': 'model',
+            'parts': [
+              {'text': message.substring(11)} // Retirer "Assistant: "
+            ]
+          });
         }
       }
-      
-      // Ajouter le message actuel
-      contents.add({
-        'role': 'user',
-        'parts': [
-          {'text': prompt}
-        ]
-      });
+    }
+    
+    // Ajouter le message actuel
+    contents.add({
+      'role': 'user',
+      'parts': [
+        {'text': prompt}
+      ]
+    });
 
-      final response = await http.post(
+    // Créer un client HTTP pour pouvoir l'annuler
+    final client = http.Client();
+    _activeClients.add(client);
+    
+    try {
+      // Vérifier si annulé avant la requête
+      if (_isCancelled) {
+        throw Exception('Requête annulée');
+      }
+      
+      final response = await client.post(
         Uri.parse('$_baseUrl?key=$_apiKey'),
         headers: {
           'Content-Type': 'application/json',
@@ -126,6 +156,11 @@ class AIService {
           }
         }),
       );
+      
+      // Vérifier si annulé après la requête
+      if (_isCancelled) {
+        throw Exception('Requête annulée');
+      }
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -140,7 +175,14 @@ class AIService {
       }
     } catch (e) {
       print('Erreur: $e');
+      if (e.toString().contains('annulée')) {
+        return "Requête annulée par l'utilisateur.";
+      }
       return "Une erreur s'est produite lors de la génération de la réponse.";
+    } finally {
+      // Nettoyer le client de la liste
+      _activeClients.remove(client);
+      client.close();
     }
   }
 
@@ -172,5 +214,32 @@ class AIService {
   String formatPromptForAssistant(String userInput) {
     // Cette méthode est maintenant simplifiée car le contexte est géré dans generateResponse
     return userInput;
+  }
+  
+  /// Annuler toutes les requêtes HTTP en cours
+  void cancelAllRequests() {
+    print('🚫 Annulation de toutes les requêtes HTTP en cours...');
+    _isCancelled = true;
+    
+    // Fermer tous les clients HTTP actifs
+    for (final client in _activeClients) {
+      try {
+        client.close();
+      } catch (e) {
+        print('Erreur lors de la fermeture du client: $e');
+      }
+    }
+    _activeClients.clear();
+    
+    // Annuler aussi les requêtes Raise
+    _raiseService.cancelAllRequests();
+  }
+  
+  /// Reset du service - remettre dans l'état initial
+  void reset() {
+    print('🔄 Reset du service AI...');
+    cancelAllRequests();
+    _isCancelled = false;
+    // Pas besoin de reset d'autres états car ils sont recréés à chaque requête
   }
 }

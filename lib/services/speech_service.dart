@@ -150,7 +150,7 @@ class SpeechService {
   }
 
   List<String> getSupportedLocales() {
-    return ['fr-FR', 'en-US', 'ja-JP'];
+    return ['fr-FR', 'en-US', 'ja-JP', 'es-ES', 'it-IT', 'de-DE', 'zh-CN'];
   }
 
   void dispose() {

@@ -1,9 +1,5 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter/services.dart';
-import 'dart:convert';
 import 'gemini_tts_test.dart';
 
 enum TtsEngine {
@@ -21,11 +17,12 @@ abstract class TtsService {
 class AndroidTtsService implements TtsService {
   final FlutterTts _flutterTts = FlutterTts();
   bool _isInitialized = false;
+  String _currentLanguage = 'fr-FR';
 
   Future<void> initialize() async {
     if (_isInitialized) return;
 
-    await _flutterTts.setLanguage("fr-FR");
+    await _flutterTts.setLanguage(_currentLanguage);
     await _flutterTts.setPitch(1.0);
     await _flutterTts.setSpeechRate(0.5);
     await _flutterTts.setVolume(1.0);
@@ -33,26 +30,8 @@ class AndroidTtsService implements TtsService {
     // Configuration avancée pour Android
     await _flutterTts.awaitSpeakCompletion(true);
     
-    // Essayer d'utiliser une voix de meilleure qualité si disponible
-    try {
-      final voices = await _flutterTts.getVoices;
-      final frenchVoices = voices.where((voice) => 
-        voice['locale'].toString().startsWith('fr')).toList();
-      
-      if (frenchVoices.isNotEmpty) {
-        // Préférer les voix neurales ou de haute qualité
-        final neuralVoice = frenchVoices.firstWhere(
-          (voice) => voice['name'].toString().toLowerCase().contains('neural') ||
-                    voice['name'].toString().toLowerCase().contains('premium') ||
-                    voice['name'].toString().toLowerCase().contains('enhanced'),
-          orElse: () => frenchVoices.first,
-        );
-        await _flutterTts.setVoice(neuralVoice);
-        print('Voix sélectionnée: ${neuralVoice['name']}');
-      }
-    } catch (e) {
-      print('Impossible de configurer une voix spécifique: $e');
-    }
+    // Sélectionner la meilleure voix pour la langue actuelle
+    await _selectBestVoice();
 
     _isInitialized = true;
   }
@@ -74,8 +53,39 @@ class AndroidTtsService implements TtsService {
   }
 
   // Méthodes supplémentaires pour Android TTS
+  Future<void> updateLanguage(String language) async {
+    _currentLanguage = language;
+    await _flutterTts.setLanguage(_currentLanguage);
+    
+    // Sélectionner la meilleure voix pour la nouvelle langue
+    await _selectBestVoice();
+  }
+
+  Future<void> _selectBestVoice() async {
+    try {
+      final voices = await _flutterTts.getVoices;
+      final languageCode = _currentLanguage.split('-')[0];
+      final languageVoices = voices.where((voice) => 
+        voice['locale'].toString().startsWith(languageCode)).toList();
+      
+      if (languageVoices.isNotEmpty) {
+        // Préférer les voix neurales ou de haute qualité
+        final bestVoice = languageVoices.firstWhere(
+          (voice) => voice['name'].toString().toLowerCase().contains('neural') ||
+                    voice['name'].toString().toLowerCase().contains('premium') ||
+                    voice['name'].toString().toLowerCase().contains('enhanced'),
+          orElse: () => languageVoices.first,
+        );
+        await _flutterTts.setVoice(bestVoice);
+        print('Voix sélectionnée pour $_currentLanguage: ${bestVoice['name']}');
+      }
+    } catch (e) {
+      print('Impossible de configurer une voix spécifique: $e');
+    }
+  }
+
   Future<void> setLanguage(String language) async {
-    await _flutterTts.setLanguage(language);
+    await updateLanguage(language);
   }
 
   Future<void> setSpeechRate(double rate) async {
@@ -95,6 +105,7 @@ class AndroidTtsService implements TtsService {
 class GeminiTtsService implements TtsService {
   final String _apiKey;
   late GeminiTtsTest _geminiTest;
+  String _currentLanguage = 'fr-FR';
 
   GeminiTtsService({required String apiKey}) : _apiKey = apiKey {
     _geminiTest = GeminiTtsTest(apiKey: apiKey);
@@ -105,10 +116,13 @@ class GeminiTtsService implements TtsService {
     try {
       print('🎙️ Utilisation du système Gemini TTS avancé...');
       
+      // Sélectionner la voix appropriée selon la langue
+      String voiceName = _getVoiceForLanguage(_currentLanguage);
+      
       // Utiliser le système de test avancé qui fonctionne
       final success = await _geminiTest.testGeminiTts(
         text: text,
-        voiceName: 'Kore',
+        voiceName: voiceName,
       );
       
       if (!success) {
@@ -139,6 +153,30 @@ class GeminiTtsService implements TtsService {
       print('ℹ️ Arrêt demandé pour Gemini TTS');
     } catch (e) {
       print('Erreur arrêt audio: $e');
+    }
+  }
+
+  Future<void> updateLanguage(String language) async {
+    _currentLanguage = language;
+  }
+
+  String _getVoiceForLanguage(String language) {
+    switch (language.split('-')[0]) {
+      case 'en':
+        return 'Nova'; // Voix anglaise naturelle
+      case 'ja':
+        return 'Aura'; // Voix qui fonctionne bien pour le japonais
+      case 'es':
+        return 'Kore'; // Voix espagnole
+      case 'it':
+        return 'Nova'; // Voix italienne
+      case 'de':
+        return 'Alloy'; // Voix allemande
+      case 'zh':
+        return 'Echo'; // Voix chinoise
+      case 'fr':
+      default:
+        return 'Kore'; // Voix française par défaut
     }
   }
 

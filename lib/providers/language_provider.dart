@@ -12,6 +12,10 @@ class LanguageProvider extends ChangeNotifier {
     Locale('fr', 'FR'), // Français
     Locale('en', 'US'), // Anglais
     Locale('ja', 'JP'), // Japonais
+    Locale('es', 'ES'), // Espagnol
+    Locale('it', 'IT'), // Italien
+    Locale('de', 'DE'), // Allemand
+    Locale('zh', 'CN'), // Chinois
   ];
 
   Locale get currentLocale => _currentLocale;
@@ -78,6 +82,14 @@ class LanguageProvider extends ChangeNotifier {
         return 'English';
       case 'ja':
         return '日本語';
+      case 'es':
+        return 'Español';
+      case 'it':
+        return 'Italiano';
+      case 'de':
+        return 'Deutsch';
+      case 'zh':
+        return '中文';
       default:
         return locale.languageCode;
     }
@@ -88,9 +100,17 @@ class LanguageProvider extends ChangeNotifier {
       case 'fr':
         return '🇫🇷';
       case 'en':
-        return '🇺🇸';
+        return '🇬🇧';
       case 'ja':
         return '🇯🇵';
+      case 'es':
+        return '🇪🇸';
+      case 'it':
+        return '🇮🇹';
+      case 'de':
+        return '🇩🇪';
+      case 'zh':
+        return '🇨🇳';
       default:
         return '🌐';
     }
