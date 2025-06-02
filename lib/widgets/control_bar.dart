@@ -83,7 +83,7 @@ class ControlBar extends StatelessWidget {
                     onPressed: () {
                       Navigator.pushNamed(context, '/qr-scanner');
                     },
-                    backgroundColor: const Color(0xFF4CAF50),
+                    backgroundColor: const Color(0xFF6B7FD7),
                   ),
                   
                   // Sélecteur de langue
