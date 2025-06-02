@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../providers/voice_assistant_provider.dart';
 import '../models/assistant.dart';
 
@@ -17,9 +18,9 @@ class AssistantSelectionScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Choisir un assistant',
-          style: TextStyle(
+        title: Text(
+          AppLocalizations.of(context)?.chooseAssistant ?? 'Choose assistant',
+          style: const TextStyle(
             color: Colors.white,
             fontFamily: 'Chakra Petch',
             fontSize: 20,
@@ -34,12 +35,12 @@ class AssistantSelectionScreen extends StatelessWidget {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  CircularProgressIndicator(color: Colors.white),
-                  SizedBox(height: 16),
+                children: [
+                  const CircularProgressIndicator(color: Colors.white),
+                  const SizedBox(height: 16),
                   Text(
-                    'Chargement des assistants...',
-                    style: TextStyle(
+                    AppLocalizations.of(context)?.loadingAssistants ?? 'Loading assistants...',
+                    style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 16,
                     ),
@@ -159,8 +160,8 @@ class AssistantSelectionScreen extends StatelessWidget {
                                     ),
                                     child: Text(
                                       assistant.type == AssistantType.gemini
-                                          ? 'GÉNÉRAL'
-                                          : 'SPÉCIALISÉ',
+                                          ? (AppLocalizations.of(context)?.general ?? 'GENERAL')
+                                          : (AppLocalizations.of(context)?.specialized ?? 'SPECIALIZED'),
                                       style: TextStyle(
                                         color: assistant.type == AssistantType.gemini
                                             ? const Color(0xFF4285F4)

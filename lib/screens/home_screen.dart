@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../providers/voice_assistant_provider.dart';
 import '../widgets/voice_button.dart';
 import '../widgets/conversation_history.dart';
@@ -50,10 +51,10 @@ class _HomeScreenState extends State<HomeScreen> {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const <Widget>[
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Initialisation de l\'assistant vocal...'),
+                children: <Widget>[
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(AppLocalizations.of(context)?.initializingAssistant ?? 'Initializing voice assistant...'),
                 ],
               ),
             );
@@ -80,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   children: [
                     Text(
-                      _getStateText(provider.state),
+                      _getStateText(context, provider.state),
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -115,18 +116,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  String _getStateText(AssistantState state) {
+  String _getStateText(BuildContext context, AssistantState state) {
+    final localizations = AppLocalizations.of(context);
     switch (state) {
       case AssistantState.idle:
-        return 'Prêt à vous écouter';
+        return localizations?.ready ?? 'Ready to listen';
       case AssistantState.listening:
-        return 'Je vous écoute...';
+        return localizations?.listening ?? 'I\'m listening...';
+      case AssistantState.readyToSend:
+        return localizations?.readyToSend ?? 'Message ready to send';
       case AssistantState.thinking:
-        return 'Je réfléchis...';
+        return localizations?.thinking ?? 'Thinking...';
       case AssistantState.speaking:
-        return 'Je réponds...';
+        return localizations?.speaking ?? 'Speaking...';
       case AssistantState.error:
-        return 'Erreur de connexion';
+        return localizations?.connectionError ?? 'Connection error';
     }
   }
 
@@ -136,6 +140,8 @@ class _HomeScreenState extends State<HomeScreen> {
         return Colors.green;
       case AssistantState.listening:
         return Colors.red;
+      case AssistantState.readyToSend:
+        return Colors.green;
       case AssistantState.thinking:
         return Colors.orange;
       case AssistantState.speaking:

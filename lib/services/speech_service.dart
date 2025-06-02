@@ -19,6 +19,7 @@ class SpeechService {
   String get currentLocale => _currentLocale;
   
   Function(String)? _onErrorCallback;
+  Function(String)? _onStatusCallback;
   
   /// Définir la langue avant l'initialisation
   void setInitialLanguage(String localeId) {
@@ -34,12 +35,19 @@ class SpeechService {
     }
     
     _speechEnabled = await _speechToText.initialize(
-      onStatus: (status) => print('Speech status: $status'),
+      onStatus: (status) {
+        print('Speech status: $status');
+        if (_onStatusCallback != null) {
+          _onStatusCallback!(status);
+        }
+      },
       onError: (error) {
         print('Speech error: $error');
-        // Notifier l'erreur pour redémarrage automatique
-        if (_onErrorCallback != null) {
+        // Ne notifier que les erreurs critiques, pas les "no match"
+        if (error.errorMsg != 'error_no_match' && _onErrorCallback != null) {
           _onErrorCallback!(error.errorMsg);
+        } else if (error.errorMsg == 'error_no_match') {
+          print('Erreur speech: error_no_match - Aucun audio détecté');
         }
       },
     );
@@ -56,19 +64,21 @@ class SpeechService {
   Future<void> startListening({
     required Function(String) onResult, 
     Function(String)? onError,
-    Function(double)? onSoundLevelChange
+    Function(double)? onSoundLevelChange,
+    Function(String)? onStatusChange
   }) async {
     if (!_speechEnabled) return;
     
     _onErrorCallback = onError;
+    _onStatusCallback = onStatusChange;
     
     await _speechToText.listen(
       onResult: (result) {
         _lastWords = result.recognizedWords;
         onResult(_lastWords);
       },
-      listenFor: const Duration(seconds: 30), // Durée raisonnable
-      pauseFor: const Duration(seconds: 3), // Pause optimisée
+      listenFor: const Duration(seconds: 30), // Durée augmentée pour utilisation réelle
+      pauseFor: const Duration(seconds: 8), // Pause augmentée - tolérance au silence
       partialResults: true,
       localeId: _currentLocale,
       listenMode: ListenMode.dictation,
@@ -127,11 +137,19 @@ class SpeechService {
           
           // Réinitialiser avec la nouvelle configuration de langue
           _speechEnabled = await _speechToText.initialize(
-            onStatus: (status) => print('Speech status: $status'),
+            onStatus: (status) {
+              print('Speech status: $status');
+              if (_onStatusCallback != null) {
+                _onStatusCallback!(status);
+              }
+            },
             onError: (error) {
               print('Speech error: $error');
-              if (_onErrorCallback != null) {
+              // Ne notifier que les erreurs critiques, pas les "no match"
+              if (error.errorMsg != 'error_no_match' && _onErrorCallback != null) {
                 _onErrorCallback!(error.errorMsg);
+              } else if (error.errorMsg == 'error_no_match') {
+                print('Erreur speech: error_no_match - Aucun audio détecté');
               }
             },
           );

@@ -13,6 +13,7 @@ import 'dart:async';
 enum AssistantState {
   idle,
   listening,
+  readyToSend,
   thinking,
   speaking,
   error
@@ -50,6 +51,7 @@ class VoiceAssistantProvider with ChangeNotifier {
   Timer? _errorTimer;
   Timer? _resetTimer;
   bool _isDisposed = false;
+  
   
   AssistantState get state => _state;
   String get currentText => _currentText;
@@ -181,6 +183,15 @@ class VoiceAssistantProvider with ChangeNotifier {
         // Mettre à jour le niveau sonore pour l'animation
         _currentSoundLevel = level;
         notifyListeners();
+      },
+      onStatusChange: (status) {
+        print('Status change: $status');
+        // Détecter quand l'écoute s'arrête automatiquement
+        if (status == 'done' || status == 'notListening') {
+          if (_isRecording && _state == AssistantState.listening) {
+            _handleAutoStop();
+          }
+        }
       }
     );
     
@@ -219,7 +230,37 @@ class VoiceAssistantProvider with ChangeNotifier {
     }
     
     if (_currentText.isNotEmpty) {
-      await _processUserInput(_currentText);
+      _setState(AssistantState.readyToSend);
+    } else {
+      _setState(AssistantState.idle);
+    }
+    
+    notifyListeners();
+  }
+  
+  /// Envoyer le message transcrit
+  Future<void> sendMessage() async {
+    if (_state != AssistantState.readyToSend || _currentText.isEmpty) return;
+    
+    await _processUserInput(_currentText);
+  }
+  
+  /// Éditer le texte transcrit
+  void editCurrentText(String newText) {
+    if (_state == AssistantState.readyToSend) {
+      _currentText = newText;
+      notifyListeners();
+    }
+  }
+  
+  /// Gérer l'arrêt automatique de l'enregistrement
+  void _handleAutoStop() {
+    print('Arrêt automatique détecté');
+    _isRecording = false;
+    _currentSoundLevel = 0.0;
+    
+    if (_currentText.isNotEmpty) {
+      _setState(AssistantState.readyToSend);
     } else {
       _setState(AssistantState.idle);
     }
@@ -293,10 +334,10 @@ class VoiceAssistantProvider with ChangeNotifier {
       
       // Parler la réponse nettoyée avec le moteur TTS sélectionné
       _setState(AssistantState.speaking);
+      _setupTtsCallbacks(cleanedResponse);
       await _ttsService.speak(cleanedResponse);
       
-      // Retour à l'état idle
-      _setState(AssistantState.idle);
+      // Note: L'état idle sera défini dans onSpeakComplete callback
       
     } catch (e) {
       _setState(AssistantState.error);
@@ -328,8 +369,9 @@ class VoiceAssistantProvider with ChangeNotifier {
   Future<void> testTtsEngine(String message) async {
     try {
       _setState(AssistantState.speaking);
+      _setupTtsCallbacks(message);
       await _ttsService.speak(message);
-      _setState(AssistantState.idle);
+      // Note: L'état idle sera défini dans onSpeakComplete callback
     } catch (e) {
       _setState(AssistantState.idle);
       print('Erreur test TTS: $e');
@@ -624,6 +666,15 @@ class VoiceAssistantProvider with ChangeNotifier {
     
     // Le TTS service est déjà configuré
     // Pas besoin de le réinitialiser
+  }
+  
+  /// Configuration des callbacks TTS basiques
+  void _setupTtsCallbacks(String text) {
+    // Callback pour la fin de la lecture
+    _ttsService.onSpeakComplete = () {
+      _setState(AssistantState.idle);
+      notifyListeners();
+    };
   }
 
   @override

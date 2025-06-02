@@ -103,8 +103,8 @@ class _VoiceScreenState extends State<VoiceScreen> {
                 right: 0,
                 child: ControlBar(
                   isPaused: false, // Plus de logique pause/play
-                  isCameraOn: _isCameraOn,
-                  onCameraPressed: _toggleCamera,
+                  isCameraOn: false,
+                  onCameraPressed: null, // Supprimé - remplacé par QR
                   onPausePressed: null, // Bouton pause supprimé
                   onClosePressed: _startNewConversation,
                 ),

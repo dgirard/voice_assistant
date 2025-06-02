@@ -8,6 +8,7 @@ import 'screens/voice_screen.dart';
 import 'screens/assistant_selection_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/gemini_tts_test_screen.dart';
+import 'screens/qr_scanner_screen.dart';
 import 'config/env_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -68,6 +69,7 @@ class VoiceAssistantApp extends StatelessWidget {
               '/assistant-selection': (context) => const AssistantSelectionScreen(),
               '/settings': (context) => const SettingsScreen(),
               '/gemini-tts-test': (context) => const GeminiTtsTestScreen(),
+              '/qr-scanner': (context) => const QrScannerScreen(),
             },
             debugShowCheckedModeBanner: false,
           );

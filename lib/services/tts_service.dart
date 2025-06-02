@@ -11,6 +11,9 @@ abstract class TtsService {
   Future<void> speak(String text);
   Future<void> stop();
   void dispose();
+  
+  // Callback simple pour la fin de lecture
+  void Function()? onSpeakComplete;
 }
 
 /// Option 1: TTS Android Standard (Recommandée)
@@ -18,6 +21,10 @@ class AndroidTtsService implements TtsService {
   final FlutterTts _flutterTts = FlutterTts();
   bool _isInitialized = false;
   String _currentLanguage = 'fr-FR';
+  
+  // Callback simple
+  @override
+  void Function()? onSpeakComplete;
 
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -29,6 +36,15 @@ class AndroidTtsService implements TtsService {
     
     // Configuration avancée pour Android
     await _flutterTts.awaitSpeakCompletion(true);
+    
+    // Configurer les callbacks TTS
+    _flutterTts.setCompletionHandler(() {
+      onSpeakComplete?.call();
+    });
+    
+    _flutterTts.setErrorHandler((msg) {
+      // Ne rien faire en cas d'erreur
+    });
     
     // Sélectionner la meilleure voix pour la langue actuelle
     await _selectBestVoice();
@@ -76,7 +92,10 @@ class AndroidTtsService implements TtsService {
                     voice['name'].toString().toLowerCase().contains('enhanced'),
           orElse: () => languageVoices.first,
         );
-        await _flutterTts.setVoice(bestVoice);
+        await _flutterTts.setVoice({
+          "name": bestVoice['name'].toString(),
+          "locale": bestVoice['locale'].toString(),
+        });
         print('Voix sélectionnée pour $_currentLanguage: ${bestVoice['name']}');
       }
     } catch (e) {
@@ -106,6 +125,10 @@ class GeminiTtsService implements TtsService {
   final String _apiKey;
   late GeminiTtsTest _geminiTest;
   String _currentLanguage = 'fr-FR';
+  
+  // Callback simple
+  @override
+  void Function()? onSpeakComplete;
 
   GeminiTtsService({required String apiKey}) : _apiKey = apiKey {
     _geminiTest = GeminiTtsTest(apiKey: apiKey);
@@ -129,6 +152,7 @@ class GeminiTtsService implements TtsService {
         throw Exception('Échec génération audio Gemini');
       }
       
+      onSpeakComplete?.call();
       print('✅ Gemini TTS avancé terminé avec succès');
       
     } catch (e) {
@@ -139,6 +163,7 @@ class GeminiTtsService implements TtsService {
       await fallback.initialize();
       await fallback.speak('Gemini TTS a rencontré une erreur. Voici la voix Android standard.');
       
+      onSpeakComplete?.call();
       // Ne pas faire de throw pour éviter les crashes
       print('ℹ️ Fallback vers Android TTS effectué');
     }

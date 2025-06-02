@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../providers/voice_assistant_provider.dart';
 
 class VoiceRecordButton extends StatefulWidget {
@@ -86,7 +87,7 @@ class _VoiceRecordButtonState extends State<VoiceRecordButton>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      _getTextForState(provider.state),
+                      _getTextForState(context, provider.state),
                       style: const TextStyle(
                         fontFamily: 'Chakra Petch',
                         fontSize: 12,
@@ -109,6 +110,7 @@ class _VoiceRecordButtonState extends State<VoiceRecordButton>
       case AssistantState.listening:
         _animationController.repeat(reverse: true);
         break;
+      case AssistantState.readyToSend:
       case AssistantState.thinking:
       case AssistantState.speaking:
         _animationController.forward();
@@ -131,6 +133,10 @@ class _VoiceRecordButtonState extends State<VoiceRecordButton>
           await provider.stopRecording();
         }
         break;
+      case AssistantState.readyToSend:
+        // Envoyer le message
+        await provider.sendMessage();
+        break;
       case AssistantState.speaking:
         // Arrêter la synthèse vocale
         await provider.stopSpeaking();
@@ -148,6 +154,8 @@ class _VoiceRecordButtonState extends State<VoiceRecordButton>
     switch (state) {
       case AssistantState.listening:
         return Icons.mic;
+      case AssistantState.readyToSend:
+        return Icons.send;
       case AssistantState.thinking:
         return Icons.psychology;
       case AssistantState.speaking:
@@ -159,18 +167,21 @@ class _VoiceRecordButtonState extends State<VoiceRecordButton>
     }
   }
 
-  String _getTextForState(AssistantState state) {
+  String _getTextForState(BuildContext context, AssistantState state) {
+    final localizations = AppLocalizations.of(context);
     switch (state) {
       case AssistantState.listening:
-        return 'Arrêter';
+        return localizations?.stop ?? 'Stop';
+      case AssistantState.readyToSend:
+        return localizations?.send ?? 'Send';
       case AssistantState.thinking:
-        return 'Arrêter';
+        return localizations?.stop ?? 'Stop';
       case AssistantState.speaking:
-        return 'Arrêter';
+        return localizations?.stop ?? 'Stop';
       case AssistantState.error:
-        return 'Erreur';
+        return localizations?.error ?? 'Error';
       default:
-        return 'Parler';
+        return localizations?.speak ?? 'Speak';
     }
   }
 
@@ -178,6 +189,8 @@ class _VoiceRecordButtonState extends State<VoiceRecordButton>
     switch (state) {
       case AssistantState.listening:
         return Colors.red;
+      case AssistantState.readyToSend:
+        return Colors.green;
       case AssistantState.thinking:
         return Colors.orange;
       case AssistantState.speaking:

@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:voice_assistant/services/raise_api_service.dart';
-import 'package:voice_assistant/models/assistant.dart';
 
 void main() {
   group('RaiseApiService Tests', () {

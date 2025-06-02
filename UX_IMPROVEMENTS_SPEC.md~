@@ -1,0 +1,357 @@
+# Spécification des Améliorations UX/UI - Assistant Vocal Compagnie du Mont-Blanc
+
+## Vue d'ensemble
+
+Cette spécification détaille les améliorations UX/UI à implémenter pour l'assistant vocal de la Compagnie du Mont-Blanc, basées sur l'analyse des écrans actuels et les recommandations d'amélioration.
+
+## 1. Identité Visuelle et Branding
+
+### 1.1 Palette de Couleurs
+```dart
+// Couleurs principales Compagnie du Mont-Blanc
+class CmbColors {
+  static const Color primary = Color(0xFF2B5A87);        // Bleu Mont-Blanc
+  static const Color secondary = Color(0xFFFFFFFF);      // Blanc neige
+  static const Color accent = Color(0xFFE8A317);         // Orange coucher soleil
+  static const Color nature = Color(0xFF2D5F3F);         // Vert sapin
+  static const Color background = Color(0xFF0A0A0A);     // Noir profond
+  static const Color surface = Color(0xFF1A1A1A);        // Gris anthracite
+}
+```
+
+### 1.2 Logo et Positionnement
+- ✅ **Logo déjà implémenté** en haut à droite (60x60px)
+- **Position**: Top-right (50px du haut, 20px de droite)
+- **Taille**: 60x60 pixels avec `fit: BoxFit.contain`
+
+### 1.3 Arrière-plan Thématique
+```dart
+// Gradient subtil Mont-Blanc
+decoration: const BoxDecoration(
+  gradient: LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [
+      Color(0xFF000000),      // Noir profond
+      Color(0xFF0D1421),      // Bleu nuit Mont-Blanc
+      Color(0xFF101015),      // Gris charbon
+    ],
+  ),
+),
+```
+
+## 2. États de l'Interface et Feedback Visuel
+
+### 2.1 État Initial (Prêt à écouter)
+**Fichier**: `lib/screens/voice_screen.dart`
+
+#### Bouton Microphone Principal
+```dart
+// Animation de pulsation subtile en état idle
+AnimatedContainer(
+  duration: Duration(milliseconds: 1500),
+  decoration: BoxDecoration(
+    shape: BoxShape.circle,
+    boxShadow: _isIdle ? [
+      BoxShadow(
+        color: CmbColors.primary.withOpacity(0.3),
+        blurRadius: 20,
+        spreadRadius: _pulseAnimation.value * 10,
+      )
+    ] : [],
+  ),
+)
+```
+
+#### Instructions Utilisateur
+- **Texte actuel**: "Maintenez le bouton pour enregistrer..."
+- **Amélioration**: Police Chakra Petch, taille 16px, couleur blanche avec opacité 0.8
+- **Position**: Centré sous le bouton microphone
+
+### 2.2 État d'Enregistrement (Listening)
+**Fichier**: `lib/widgets/voice_record_button.dart`
+
+#### Feedback Visuel du Bouton
+```dart
+// Transformation du bouton pendant l'enregistrement
+AnimatedContainer(
+  duration: Duration(milliseconds: 200),
+  width: _isListening ? 100 : 80,
+  height: _isListening ? 100 : 80,
+  decoration: BoxDecoration(
+    shape: BoxShape.circle,
+    color: _isListening ? CmbColors.accent : CmbColors.primary,
+    boxShadow: _isListening ? [
+      BoxShadow(
+        color: CmbColors.accent.withOpacity(0.5),
+        blurRadius: 30,
+        spreadRadius: 5,
+      )
+    ] : [],
+  ),
+)
+```
+
+#### Animation d'Ondes Sonores
+**Fichier**: `lib/widgets/wave_animation.dart` (déjà existant)
+- **Amélioration**: Utiliser les couleurs CMB
+- **Amplitude**: Basée sur `provider.currentSoundLevel`
+
+#### Texte d'Instruction
+- **Changement**: "Je vous écoute..." ou "Relâchez pour envoyer"
+- **Couleur**: `CmbColors.accent`
+
+### 2.3 État de Réponse (Speaking/Response)
+**Fichier**: `lib/widgets/speech_text_display.dart`
+
+#### Présentation de la Réponse
+```dart
+// Amélioration de la bulle de réponse
+Container(
+  decoration: BoxDecoration(
+    color: CmbColors.surface.withOpacity(0.9),
+    borderRadius: BorderRadius.circular(16),
+    border: Border.all(
+      color: CmbColors.primary.withOpacity(0.3),
+      width: 1,
+    ),
+  ),
+  child: RichText(
+    text: TextSpan(
+      style: TextStyle(
+        fontFamily: 'Chakra Petch',
+        fontSize: 16,
+        color: Colors.white,
+        height: 1.4,
+      ),
+      children: _buildFormattedText(responseText),
+    ),
+  ),
+)
+```
+
+#### Mise en Forme du Texte
+```dart
+List<TextSpan> _buildFormattedText(String text) {
+  // Mettre en gras les mots-clés Mont-Blanc
+  final keywords = ['Mont-Blanc', 'Mer de Glace', 'Aiguilles de Chamonix', 'Compagnie'];
+  // Implémentation de highlighting avec TextSpan
+}
+```
+
+## 3. Barre d'Actions Contextuelle
+
+### 3.1 État Initial
+**Fichier**: `lib/widgets/control_bar.dart`
+
+```dart
+// Actions pour l'état initial
+List<ControlBarAction> _getInitialActions() {
+  return [
+    ControlBarAction(
+      icon: Icons.keyboard,
+      label: 'Clavier',
+      onPressed: _showTextInput,
+    ),
+    ControlBarAction(
+      icon: Icons.settings,
+      label: 'Paramètres',
+      onPressed: _openSettings,
+    ),
+    ControlBarAction(
+      icon: Icons.close,
+      label: 'Fermer',
+      onPressed: _closeApp,
+    ),
+  ];
+}
+```
+
+### 3.2 État de Réponse
+```dart
+// Actions pour l'état de réponse
+List<ControlBarAction> _getResponseActions() {
+  return [
+    ControlBarAction(
+      icon: Icons.mic,
+      label: 'Nouvelle question',
+      onPressed: _startNewRecording,
+    ),
+    ControlBarAction(
+      icon: Icons.volume_up,
+      label: 'Relire',
+      onPressed: _repeatResponse,
+    ),
+    ControlBarAction(
+      icon: Icons.share,
+      label: 'Partager',
+      onPressed: _shareResponse,
+    ),
+    ControlBarAction(
+      icon: Icons.thumb_up_outlined,
+      label: 'Utile',
+      onPressed: _ratePositive,
+    ),
+    ControlBarAction(
+      icon: Icons.thumb_down_outlined,
+      label: 'Pas utile',
+      onPressed: _rateNegative,
+    ),
+  ];
+}
+```
+
+## 4. Gestion des États du Bouton Principal
+
+### 4.1 Logique d'État
+**Fichier**: `lib/providers/voice_assistant_provider.dart`
+
+```dart
+enum VoiceButtonState {
+  ready,        // Prêt à écouter - gros bouton central
+  listening,    // En écoute - bouton transformé
+  processing,   // Traitement - bouton désactivé
+  responding,   // Réponse - bouton réduit ou masqué
+}
+
+VoiceButtonState get voiceButtonState {
+  switch (state) {
+    case AssistantState.idle:
+      return VoiceButtonState.ready;
+    case AssistantState.listening:
+      return VoiceButtonState.listening;
+    case AssistantState.thinking:
+      return VoiceButtonState.processing;
+    case AssistantState.speaking:
+      return VoiceButtonState.responding;
+    default:
+      return VoiceButtonState.ready;
+  }
+}
+```
+
+### 4.2 Adaptation du Bouton Principal
+**Fichier**: `lib/widgets/voice_record_button.dart`
+
+```dart
+Widget _buildAdaptiveButton(VoiceButtonState buttonState) {
+  switch (buttonState) {
+    case VoiceButtonState.ready:
+      return _buildMainButton();
+    case VoiceButtonState.listening:
+      return _buildListeningButton();
+    case VoiceButtonState.processing:
+      return _buildProcessingButton();
+    case VoiceButtonState.responding:
+      return _buildMinimizedButton(); // Bouton réduit
+  }
+}
+```
+
+## 5. Indicateur de Langue
+
+### 5.1 Cohérence
+**Fichier**: `lib/widgets/language_selector.dart`
+
+```dart
+// Correction du débordement et amélioration du style
+Container(
+  width: 120, // Largeur fixe pour éviter l'overflow
+  decoration: BoxDecoration(
+    color: CmbColors.surface.withOpacity(0.8),
+    borderRadius: BorderRadius.circular(20),
+    border: Border.all(
+      color: CmbColors.primary.withOpacity(0.3),
+      width: 1,
+    ),
+  ),
+  child: ClipRRect(
+    borderRadius: BorderRadius.circular(20),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Flag et texte avec Flexible pour éviter overflow
+      ],
+    ),
+  ),
+)
+```
+
+## 6. Animations et Transitions
+
+### 6.1 Transitions d'État
+```dart
+// Transition fluide entre les états
+AnimatedSwitcher(
+  duration: Duration(milliseconds: 300),
+  transitionBuilder: (child, animation) {
+    return FadeTransition(
+      opacity: animation,
+      child: ScaleTransition(
+        scale: animation,
+        child: child,
+      ),
+    );
+  },
+  child: _buildCurrentStateWidget(),
+)
+```
+
+### 6.2 Micro-animations
+- **Pulsation idle**: 1.5s cycle, échelle 1.0 → 1.05
+- **Transition listening**: 200ms scale et couleur
+- **Ondes sonores**: Amplitude basée sur niveau réel
+
+## 7. Accessibilité
+
+### 7.1 Sémantique
+```dart
+Semantics(
+  label: 'Bouton microphone pour enregistrer votre question',
+  hint: 'Maintenez appuyé pour parler',
+  child: voiceButton,
+)
+```
+
+### 7.2 Contraste et Lisibilité
+- **Ratio de contraste**: Minimum 4.5:1 pour texte normal
+- **Taille de police**: Minimum 16px pour le texte principal
+- **Zone tactile**: Minimum 44x44px pour tous les boutons
+
+## 8. Plan d'Implémentation
+
+### Phase 1: Identité Visuelle
+1. ✅ Intégration du logo (déjà fait)
+2. Mise à jour de la palette de couleurs
+3. Amélioration des gradients d'arrière-plan
+
+### Phase 2: États et Feedback
+1. Correction du débordement du sélecteur de langue
+2. Implémentation des animations de bouton
+3. Amélioration du feedback visuel
+
+### Phase 3: Barre d'Actions
+1. Refactoring du `ControlBar` pour actions contextuelles
+2. Ajout des nouvelles actions (rating, partage, etc.)
+3. Tests d'intégration
+
+### Phase 4: Finalisation
+1. Tests d'accessibilité
+2. Optimisation des performances
+3. Tests utilisateur et ajustements finaux
+
+## 9. Tests et Validation
+
+### 9.1 Tests d'Interface
+- Validation des transitions entre états
+- Test de débordement sur différentes tailles d'écran
+- Validation des couleurs et contrastes
+
+### 9.2 Tests Utilisateur
+- Test de compréhension des nouveaux états
+- Validation de l'intuitivité des actions contextuelles
+- Feedback sur l'identité visuelle Mont-Blanc
+
+---
+
+**Note**: Cette spécification doit être implémentée de manière incrémentale, en testant chaque amélioration sur le Pixel 7a avant de passer à la suivante.

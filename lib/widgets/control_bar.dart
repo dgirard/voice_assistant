@@ -73,43 +73,28 @@ class ControlBar extends StatelessWidget {
             
             // Boutons à droite
             Expanded(
-              flex: 2,
+              flex: 3,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // Bouton Caméra
-                  Flexible(
-                    child: _buildControlButton(
-                      icon: isCameraOn ? Icons.videocam : Icons.videocam_off,
-                      onPressed: onCameraPressed,
-                      backgroundColor: const Color(0xFF333333),
-                    ),
+                  // Bouton QR Scanner
+                  _buildControlButton(
+                    icon: Icons.qr_code_scanner,
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/qr-scanner');
+                    },
+                    backgroundColor: const Color(0xFF4CAF50),
                   ),
                   
                   // Sélecteur de langue
-                  Flexible(
-                    child: _buildLanguageSelector(context),
-                  ),
-                  
-                  // Bouton Paramètres
-                  Flexible(
-                    child: _buildControlButton(
-                      icon: Icons.settings,
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/settings');
-                      },
-                      backgroundColor: const Color(0xFF6B7FD7),
-                    ),
-                  ),
+                  _buildLanguageSelector(context),
                   
                   // Bouton Fermer (rouge)
-                  Flexible(
-                    child: _buildControlButton(
-                      icon: Icons.close,
-                      onPressed: onClosePressed,
-                      backgroundColor: const Color(0xFFFF3B30),
-                      isCloseButton: true,
-                    ),
+                  _buildControlButton(
+                    icon: Icons.close,
+                    onPressed: onClosePressed,
+                    backgroundColor: const Color(0xFFFF3B30),
+                    isCloseButton: true,
                   ),
                 ],
               ),

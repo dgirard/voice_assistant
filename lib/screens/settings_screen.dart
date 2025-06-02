@@ -54,7 +54,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Personnalisez votre expérience d\'assistant vocal',
+                    AppLocalizations.of(context)?.settingsDescription ?? 'Customize your voice assistant experience',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey.shade600,
@@ -83,8 +83,8 @@ class SettingsScreen extends StatelessWidget {
                       SnackBar(
                         content: Text(
                           engine == TtsEngine.android 
-                            ? 'Moteur Android TTS activé' 
-                            : 'Moteur Gemini AI activé',
+                            ? AppLocalizations.of(context)?.androidTtsActivated ?? 'Android TTS engine activated'
+                            : AppLocalizations.of(context)?.geminiAiActivated ?? 'Gemini AI engine activated',
                         ),
                         backgroundColor: Theme.of(context).primaryColor,
                         behavior: SnackBarBehavior.floating,
@@ -126,9 +126,9 @@ class SettingsScreen extends StatelessWidget {
                   color: Theme.of(context).primaryColor,
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  'Test de synthèse vocale',
-                  style: TextStyle(
+                Text(
+                  AppLocalizations.of(context)?.ttsTestTitle ?? 'Text-to-speech test',
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -136,9 +136,9 @@ class SettingsScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Testez la qualité de la voix du moteur sélectionné.',
-              style: TextStyle(color: Colors.grey),
+            Text(
+              AppLocalizations.of(context)?.ttsTestDescription ?? 'Test the quality of the selected engine\'s voice.',
+              style: const TextStyle(color: Colors.grey),
             ),
             const SizedBox(height: 16),
             Consumer<VoiceAssistantProvider>(
@@ -156,8 +156,8 @@ class SettingsScreen extends StatelessWidget {
                       : const Icon(Icons.volume_up),
                   label: Text(
                     provider.state == AssistantState.speaking
-                        ? 'Test en cours...'
-                        : 'Tester la voix',
+                        ? AppLocalizations.of(context)?.testInProgress ?? 'Test in progress...'
+                        : AppLocalizations.of(context)?.testVoice ?? 'Test Voice',
                   ),
                   style: ElevatedButton.styleFrom(
                     primary: Theme.of(context).primaryColor,
@@ -188,9 +188,9 @@ class SettingsScreen extends StatelessWidget {
                   color: Colors.purple,
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  'Test avancé Gemini TTS',
-                  style: TextStyle(
+                Text(
+                  AppLocalizations.of(context)?.advancedGeminiTtsTest ?? 'Advanced Gemini TTS test',
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -198,9 +198,9 @@ class SettingsScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Testez directement l\'API Gemini TTS avec des paramètres avancés.',
-              style: TextStyle(color: Colors.grey),
+            Text(
+              AppLocalizations.of(context)?.advancedGeminiTtsDescription ?? 'Test the Gemini TTS API directly with advanced parameters.',
+              style: const TextStyle(color: Colors.grey),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
@@ -208,7 +208,7 @@ class SettingsScreen extends StatelessWidget {
                 Navigator.pushNamed(context, '/gemini-tts-test');
               },
               icon: const Icon(Icons.science),
-              label: const Text('Ouvrir le laboratoire TTS'),
+              label: Text(AppLocalizations.of(context)?.openTtsLab ?? 'Open TTS Lab'),
               style: ElevatedButton.styleFrom(
                 primary: Colors.purple,
                 onPrimary: Colors.white,
@@ -236,9 +236,9 @@ class SettingsScreen extends StatelessWidget {
                   color: Theme.of(context).primaryColor,
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  'À propos des moteurs TTS',
-                  style: TextStyle(
+                Text(
+                  AppLocalizations.of(context)?.aboutTtsEngines ?? 'About TTS engines',
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -248,8 +248,9 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 16),
             
             _buildInfoItem(
-              'Android TTS',
-              'Moteur intégré au système Android, rapide et fiable.',
+              context,
+              AppLocalizations.of(context)?.androidTts ?? 'Android TTS',
+              AppLocalizations.of(context)?.androidTtsSubtitle ?? 'Android\'s built-in engine, fast and reliable.',
               Icons.android,
               Colors.green,
             ),
@@ -257,8 +258,9 @@ class SettingsScreen extends StatelessWidget {
             const Divider(height: 24),
             
             _buildInfoItem(
-              'Gemini AI TTS',
-              'IA générative avec voix plus naturelle et expressive.',
+              context,
+              AppLocalizations.of(context)?.geminiTts ?? 'Gemini AI TTS',
+              AppLocalizations.of(context)?.geminiAiTtsSubtitle ?? 'Generative AI with more natural and expressive voice.',
               Icons.auto_awesome,
               Colors.purple,
             ),
@@ -268,7 +270,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoItem(String title, String description, IconData icon, Color color) {
+  Widget _buildInfoItem(BuildContext context, String title, String description, IconData icon, Color color) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -305,9 +307,9 @@ class SettingsScreen extends StatelessWidget {
     
     // Message différent selon le moteur pour bien distinguer
     if (provider.currentTtsEngine == TtsEngine.android) {
-      testMessage = 'Bonjour ! Vous entendez actuellement la voix Android TTS standard. Cette voix est rapide et fiable.';
+      testMessage = AppLocalizations.of(context)?.androidTtsTestMessage ?? 'Hello! You are currently hearing the standard Android TTS voice. This voice is fast and reliable.';
     } else {
-      testMessage = 'Bonjour ! Vous devriez entendre la voix Gemini AI, plus naturelle et expressive.';
+      testMessage = AppLocalizations.of(context)?.geminiTtsTestMessage ?? 'Hello! You should hear the Gemini AI voice, more natural and expressive.';
     }
     
     try {
@@ -317,9 +319,9 @@ class SettingsScreen extends StatelessWidget {
       // Afficher un message informatif pour Gemini TTS
       String errorMessage;
       if (provider.currentTtsEngine == TtsEngine.gemini) {
-        errorMessage = 'Gemini TTS n\'est pas encore opérationnel. L\'app utilise Android TTS en remplacement.';
+        errorMessage = AppLocalizations.of(context)?.geminiTtsNotOperational ?? 'Gemini TTS is not yet operational. The app uses Android TTS as replacement.';
       } else {
-        errorMessage = 'Erreur lors du test: $e';
+        errorMessage = (AppLocalizations.of(context)?.testError ?? 'Error during test: {error}').replaceAll('{error}', e.toString());
       }
       
       ScaffoldMessenger.of(context).showSnackBar(
